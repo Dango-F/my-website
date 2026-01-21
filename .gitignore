@@ -1,0 +1,29 @@
+# 依赖
+node_modules
+.pnp
+.pnp.js
+
+# 编译输出
+dist
+dist-ssr
+*.local
+build
+
+# 编辑器目录和文件
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+.project
+.classpath
+*.launch
+.settings/
+
+# 环境文件
+.env
+.env.*
