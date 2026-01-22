@@ -1,5 +1,7 @@
 PORT=3000
 MONGODB_URI=mongodb://localhost:27017/blog
+# JWT_SECRET生成指令
+# node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
 JWT_SECRET=your_jwt_secret_key
 JWT_EXPIRE=7d
 
