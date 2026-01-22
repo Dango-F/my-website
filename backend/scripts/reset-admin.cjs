@@ -1,4 +1,11 @@
-// 暂时不要用这个代码创建管理员，有bug，等修复后再用
+// 列出管理员：
+// node backend\\scripts\\reset-admin.cjs --list-admins
+// 删除所有管理员（需要确认）：
+// node backend\\scripts\\reset-admin.cjs --delete-all-admins --confirm
+// 删除单个管理员（按用户名）：
+// node backend\\scripts\\reset-admin.cjs --delete-admin --username admin --confirm
+// 删除单个管理员（按邮箱）：
+// node backend\\scripts\\reset-admin.cjs --delete-admin --email someone@example.com --confirm
 
 const mongoose = require("mongoose");
 const dotenv = require("dotenv");
@@ -22,6 +29,9 @@ const username = getArgValue("--username");
 const email = getArgValue("--email");
 const passwordArg = getArgValue("--password");
 const listAdmins = process.argv.includes("--list-admins");
+const deleteAllAdmins = process.argv.includes("--delete-all-admins");
+const deleteAdmin = process.argv.includes("--delete-admin");
+const confirmDelete = process.argv.includes("--confirm");
 const newPassword = passwordArg || crypto.randomBytes(8).toString("hex");
 
 const run = async () => {
@@ -47,6 +57,46 @@ const run = async () => {
       const emailText = item.email ? ` (${item.email})` : "";
       console.log(`${index + 1}. ${item.username}${emailText}`);
     });
+    process.exit(0);
+  }
+
+  // 删除所有管理员（危险操作，需要 --confirm）
+  if (deleteAllAdmins) {
+    if (!confirmDelete) {
+      console.error("❌ 为防止误删，删除所有管理员需要加上 --confirm 参数");
+      process.exit(1);
+    }
+    const result = await User.deleteMany({ role: "admin" });
+    console.log(`✅ 已删除 ${result.deletedCount || 0} 个管理员账号`);
+    process.exit(0);
+  }
+
+  // 删除单个管理员（需配合 --username 或 --email）
+  if (deleteAdmin) {
+    if (!username && !email) {
+      console.error("❌ 使用 --delete-admin 时请指定 --username 或 --email");
+      process.exit(1);
+    }
+
+    let target = null;
+    if (username) {
+      target = await User.findOne({ username, role: "admin" });
+    } else if (email) {
+      target = await User.findOne({ email, role: "admin" });
+    }
+
+    if (!target) {
+      console.error("❌ 未找到指定的管理员账号");
+      process.exit(1);
+    }
+
+    if (!confirmDelete) {
+      console.error("❌ 为防止误删，删除管理员需要加上 --confirm 参数");
+      process.exit(1);
+    }
+
+    await User.deleteOne({ _id: target._id });
+    console.log(`✅ 已删除管理员: ${target.username} (${target.email || "无邮箱"})`);
     process.exit(0);
   }
 

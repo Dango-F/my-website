@@ -1,3 +1,4 @@
+// 暂时不要用这个代码创建管理员，有bug，等修复后再用
 const axios = require('axios');
 
 // 配置
