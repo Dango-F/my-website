@@ -232,23 +232,26 @@ export const useProfileStore = defineStore('profile', () => {
     const checkVersionAndUpdate = async () => {
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-            // console.log('[profile] 请求 /api/version 进行轻量版本校验')
+            const hasLocal = !!localStorage.getItem('profile_data')
             const resp = await axios.get(`${API_URL}/version`)
             if (resp.data && resp.data.success) {
                 const serverProfileVer = resp.data.data.profile
-                // console.log('[profile] 服务器 profile 版本=', serverProfileVer, '本地版本=', profileVersion.value)
                 if (!profileVersion.value || String(profileVersion.value) !== String(serverProfileVer)) {
-                    // console.log('[profile] 版本不一致 -> 将从服务器拉取最新 profile')
-                    // 版本不同，拉取最新数据
                     await fetchProfile()
-                    // fetchProfile 已保存本地并更新版本
+                    if (hasLocal) {
+                        console.log('[缓存] profile：本地缓存存在，但版本不一致，已从服务器加载最新数据')
+                    } else {
+                        console.log('[缓存] profile：无本地缓存，已从服务器加载')
+                    }
                 } else {
-                    // console.log('[profile] 版本一致 -> 使用 localStorage 缓存的 profile')
-                    // 版本相同，使用本地缓存（已在 loadProfileFromLocal 中加载）
+                    console.log('[缓存] profile：使用 localStorage（版本一致）')
                 }
             }
         } catch (e) {
+            // 版本比较失败时保留错误输出，但仍可回退到本地缓存
             console.error('比较 profile 版本失败:', e)
+            const hasLocal = !!localStorage.getItem('profile_data')
+            if (hasLocal) console.log('[缓存] profile：版本比较失败，回退使用 localStorage')
         }
     }
 

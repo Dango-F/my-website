@@ -219,20 +219,25 @@ export const useTodoStore = defineStore('todo', () => {
     const checkVersionAndUpdate = async () => {
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
-            // console.log('[todos] 请求 /api/version 进行轻量版本校验')
+            const hasLocal = !!localStorage.getItem('todos')
             const resp = await axios.get(`${API_URL}/version`)
             if (resp.data && resp.data.success) {
                 const serverTodosVer = resp.data.data.todos
-                // console.log('[todos] 服务器 todos 版本=', serverTodosVer, '本地版本=', todosVersion.value)
                 if (!todosVersion.value || String(todosVersion.value) !== String(serverTodosVer)) {
-                    // console.log('[todos] 版本不一致 -> 将从服务器拉取最新 todos')
                     await fetchTodos()
+                    if (hasLocal) {
+                        console.log('[缓存] todos：本地缓存存在，但版本不一致，已从服务器加载最新数据')
+                    } else {
+                        console.log('[缓存] todos：无本地缓存，已从服务器加载')
+                    }
                 } else {
-                    // console.log('[todos] 版本一致 -> 使用 localStorage 缓存的 todos')
+                    console.log('[缓存] todos：使用 localStorage（版本一致）')
                 }
             }
         } catch (e) {
             console.error('比较 todos 版本失败:', e)
+            const hasLocal = !!localStorage.getItem('todos')
+            if (hasLocal) console.log('[缓存] todos：版本比较失败，回退使用 localStorage')
         }
     }
 
