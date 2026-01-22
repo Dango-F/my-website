@@ -2,6 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
 import { useTodoStore } from "@/stores/todo";
 import { useProfileStore } from "@/stores/profile";
+import { useConfigStore } from "@/stores/config";
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -68,6 +69,15 @@ router.beforeEach((to, from, next) => {
     todoStore.checkVersionAndUpdate && setTimeout(() => todoStore.checkVersionAndUpdate(), 0)
   } catch (e) {
     console.error('[路由] 触发 todos 版本校验失败：', e)
+  }
+
+  // 每次页面切换也触发 config 的版本校验
+  try {
+    const configStore = useConfigStore()
+    // console.log('[路由] 页面切换：触发 config 版本校验（后台异步）')
+    configStore.checkVersionAndUpdate && setTimeout(() => configStore.checkVersionAndUpdate(), 0)
+  } catch (e) {
+    console.error('[路由] 触发 config 版本校验失败：', e)
   }
 
   next();

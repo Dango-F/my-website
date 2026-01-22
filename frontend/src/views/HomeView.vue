@@ -1,6 +1,7 @@
 <script setup>
 import { useProjectStore } from "@/stores/project";
 import { useProfileStore } from "@/stores/profile";
+import { useConfigStore } from "@/stores/config";
 import { storeToRefs } from "pinia";
 import HomeSidebar from "@/components/HomeSidebar.vue";
 import RepoCard from "@/components/RepoCard.vue";
@@ -11,6 +12,7 @@ import axios from "axios";
 
 const projectStore = useProjectStore();
 const profileStore = useProfileStore();
+const configStore = useConfigStore();
 const todoStore = useTodoStore();
 const { profile } = storeToRefs(profileStore);
 // 是否正在加载
@@ -35,13 +37,12 @@ const topProjects = computed(() => {
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
 
-// 从服务器获取GitHub Token
+// 从 config store 获取 GitHub Token
 const getGithubTokenFromServer = async () => {
   try {
-    const response = await axios.get(`${API_URL}/config`);
-    if (response.data.success && response.data.data.github_token) {
-      return response.data.data.github_token;
-    }
+    // 使用 config store 而不是直接调用 API
+    await configStore.checkVersionAndUpdate()
+    return configStore.githubToken || ""
   } catch (error) {
     console.error("获取GitHub Token失败:", error);
   }

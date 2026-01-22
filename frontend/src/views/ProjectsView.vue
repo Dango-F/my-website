@@ -4,6 +4,7 @@ import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useProfileStore } from '@/stores/profile'
 import { useAuthStore } from '@/stores/auth'
+import { useConfigStore } from '@/stores/config'
 import ProfileSidebar from '@/components/ProfileSidebar.vue'
 import RepoCard from '@/components/RepoCard.vue'
 import { useSidebarStore } from '@/stores/sidebar'
@@ -12,6 +13,7 @@ import axios from 'axios'
 const projectStore = useProjectStore()
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
+const configStore = useConfigStore()
 const { profile } = storeToRefs(profileStore)
 const tagFilter = ref('')
 const languageFilter = ref('')
@@ -43,14 +45,15 @@ const lastUpdateTime = computed(() => {
     return lastFetch.toLocaleString()
 })
 
-// 从服务器加载GitHub Token
+// 从 config store 加载 GitHub Token
 const loadGitHubTokenFromServer = async () => {
     try {
         isLoadingToken.value = true;
-        const response = await axios.get(`${API_URL}/config`);
-
-        if (response.data.success && response.data.data.github_token) {
-            githubToken.value = response.data.data.github_token;
+        // 使用 config store 而不是直接调用 API
+        await configStore.checkVersionAndUpdate()
+        
+        if (configStore.githubToken) {
+            githubToken.value = configStore.githubToken;
             hasConfiguredToken.value = true;
             isEditingToken.value = false;
             
@@ -65,21 +68,25 @@ const loadGitHubTokenFromServer = async () => {
             }
         }
     } catch (error) {
-        console.error('加载GitHub Token失败:', error);
+        console.error('加载 GitHub Token 失败:', error);
         hasConfiguredToken.value = false;
     } finally {
         isLoadingToken.value = false;
     }
 };
 
-// 将GitHub Token保存到服务器
+// 将 GitHub Token 保存到服务器
 const saveGitHubTokenToServer = async (token) => {
     try {
-        await axios.post(`${API_URL}/config/github-token`, { token });
-        hasConfiguredToken.value = true;
-        isEditingToken.value = false;
-        // 保存成功后立即刷新
-        await loadGitHubRepos();
+        // 使用 config store 的更新方法
+        const success = await configStore.updateGithubToken(token)
+        if (success) {
+            githubToken.value = configStore.githubToken
+            hasConfiguredToken.value = true;
+            isEditingToken.value = false;
+            // 保存成功后立即刷新
+            await loadGitHubRepos();
+        }
     } catch (error) {
         console.error('保存GitHub Token失败:', error);
     }
