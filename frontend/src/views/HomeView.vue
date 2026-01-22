@@ -72,13 +72,11 @@ const refreshData = async () => {
   isRefreshing.value = true;
 
   try {
-    // 刷新项目数据（博客功能已移除）
-    // 同时触发 profile 和 todos 的轻量版本校验，和项目数据并行执行
-    // console.log('[首页] 手动刷新：触发项目拉取与 profile/todos 版本校验')
-    const jobs = [loadProjects()]
-    if (profileStore.checkVersionAndUpdate) jobs.push(profileStore.checkVersionAndUpdate())
-    if (todoStore.checkVersionAndUpdate) jobs.push(todoStore.checkVersionAndUpdate())
-    await Promise.allSettled(jobs)
+  // 强刷新：项目 + profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
+  const jobs = [loadProjects()]
+  if (profileStore.fetchProfile) jobs.push(profileStore.fetchProfile())
+  if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())
+  await Promise.allSettled(jobs)
 
     refreshMessage.value = {
       show: true,
