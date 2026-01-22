@@ -16,23 +16,29 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// CORS 配置：生产环境支持指定域名
+// CORS 配置：从环境变量读取允许的来源（逗号分隔），支持多域名
+const allowedOrigins = process.env.CORS_ORIGINS
+  ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+  : ["http://localhost:5173", "http://localhost:3000"];
+
 const corsOptions = {
   origin: function (origin, callback) {
-    // 允许的来源列表（从环境变量读取，用逗号分隔）
-    const allowedOrigins = process.env.CORS_ORIGINS
-      ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
-      : ["http://localhost:5173", "http://localhost:3000"];
+    // 无 origin（例如服务器请求或 Postman）也允许
+    if (!origin) return callback(null, true);
 
-    // 开发环境或请求来源在允许列表中
-    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
+    // 如果配置了 '*' 或者请求来源在允许列表中，则允许
+    if (allowedOrigins.includes("*") || allowedOrigins.includes(origin)) {
+      return callback(null, true);
     }
+
+    return callback(new Error("Not allowed by CORS"));
   },
   credentials: true, // 允许发送 Cookie
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
+
+console.log("CORS allowed origins:", allowedOrigins.join(", "));
 
 // 中间件
 app.use(cors(corsOptions));
