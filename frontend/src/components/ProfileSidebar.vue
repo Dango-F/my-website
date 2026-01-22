@@ -42,7 +42,7 @@ const closeProfileEditor = () => {
 
 const onProfileSaved = () => {
   // 配置已保存，刷新显示
-  console.log('Profile saved successfully');
+  // console.log('Profile saved successfully');
 };
 
 const alert = (message) => {

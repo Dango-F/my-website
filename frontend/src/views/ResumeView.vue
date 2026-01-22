@@ -31,7 +31,7 @@ const closeTimelineEditor = () => {
 }
 
 const onTimelineSaved = () => {
-    console.log('Timeline saved successfully')
+    // console.log('Timeline saved successfully')
 }
 
 const onDragStart = (event, index) => {

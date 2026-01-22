@@ -31,7 +31,7 @@ const closeProfileEditor = () => {
 };
 
 const onProfileSaved = () => {
-  console.log('Profile saved successfully');
+  // console.log('Profile saved successfully');
 };
 
 const alert = (message) => {

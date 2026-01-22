@@ -44,38 +44,30 @@ const router = createRouter({
   },
 });
 
-// Global navigation guard: smart refresh on page switch
-router.beforeEach(async (to, from, next) => {
+// Previously there was a smart refresh guard based on 5s debounce.
+// That logic was removed in favor of a lightweight version check on app init.
+router.beforeEach((to, from, next) => {
   // Skip login page or initial load
   if (to.path === "/login" || !from.path) {
     next();
     return;
   }
-
-  // Smart refresh profile data (5s debounce)
-  if (to.path !== "/login") {
-    const profileStore = useProfileStore();
-    if (profileStore.shouldRefresh()) {
-      console.log("Page switch: refreshing profile (cache expired)");
-      setTimeout(() => {
-        profileStore.fetchProfile();
-      }, 0);
-    } else {
-      console.log("Page switch: using cached profile data");
-    }
+  // 切换页面时触发轻量版本校验：先用 localStorage 渲染，再后台比对版本并按需更新
+  try {
+    const profileStore = useProfileStore()
+    // console.log('[路由] 页面切换：触发 profile 版本校验（后台异步）')
+    profileStore.checkVersionAndUpdate && setTimeout(() => profileStore.checkVersionAndUpdate(), 0)
+  } catch (e) {
+    console.error('[路由] 触发 profile 版本校验失败：', e)
   }
 
-  // Smart refresh todo data when entering todo page (5s debounce)
-  if (to.path.startsWith("/todo")) {
-    const todoStore = useTodoStore();
-    if (todoStore.shouldRefresh()) {
-      console.log("Switching to todo: refreshing data (cache expired)");
-      setTimeout(() => {
-        todoStore.fetchTodos();
-      }, 0);
-    } else {
-      console.log("Switching to todo: using cached data");
-    }
+  // 每次页面切换也触发 todos 的版本校验（此前仅在进入 /todo 时触发）
+  try {
+    const todoStore = useTodoStore()
+    // console.log('[路由] 页面切换：触发 todos 版本校验（后台异步）')
+    todoStore.checkVersionAndUpdate && setTimeout(() => todoStore.checkVersionAndUpdate(), 0)
+  } catch (e) {
+    console.error('[路由] 触发 todos 版本校验失败：', e)
   }
 
   next();

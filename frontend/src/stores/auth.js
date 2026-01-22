@@ -99,16 +99,16 @@ export const useAuthStore = defineStore('auth', () => {
         
         if (remainingMs <= 0) {
             // 已过期，立即触发
-            console.log('Token 已过期，立即触发登出')
+            // console.log('Token 已过期，立即触发登出')
             triggerTokenExpired()
             return
         }
         
-        console.log(`Token 将在 ${Math.floor(remainingMs / 1000)} 秒后过期`)
+        // console.log(`Token 将在 ${Math.floor(remainingMs / 1000)} 秒后过期`)
         
         // 设置精准定时器
         tokenExpireTimer = setTimeout(() => {
-            console.log('Token 过期定时器触发')
+            // console.log('Token 过期定时器触发')
             triggerTokenExpired()
         }, remainingMs)
     }

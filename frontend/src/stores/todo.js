@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
+import axios from 'axios'
 import todoService from '@/services/todoService'
 
 export const useTodoStore = defineStore('todo', () => {
@@ -7,6 +8,7 @@ export const useTodoStore = defineStore('todo', () => {
     const isLoading = ref(false);
     const error = ref(null);
     const lastFetchTime = ref(0);
+    const todosVersion = ref(localStorage.getItem('todos_version') || null)
 
     // 添加默认分类列表
     const defaultCategories = ['工作', '学习', '生活', '娱乐', '其他']
@@ -27,6 +29,23 @@ export const useTodoStore = defineStore('todo', () => {
             const fetchedTodos = await todoService.getAllTodos();
             todos.value = fetchedTodos;
             lastFetchTime.value = Date.now();
+            // 使用服务器数据中的最新 updatedAt 作为版本，避免 Date.now() 导致不匹配
+            try {
+                localStorage.setItem('todos', JSON.stringify(todos.value));
+                // 找出 fetchedTodos 中最大的 updatedAt
+                let maxTs = 0
+                for (const t of fetchedTodos) {
+                    if (t && t.updatedAt) {
+                        const ts = new Date(t.updatedAt).getTime()
+                        if (ts > maxTs) maxTs = ts
+                    }
+                }
+                const ver = maxTs ? String(maxTs) : String(Date.now())
+                localStorage.setItem('todos_version', ver)
+                todosVersion.value = ver
+            } catch (e) {
+                console.error('保存 todos 到 localStorage 失败:', e)
+            }
         } catch (err) {
             error.value = '获取待办事项失败';
             console.error(err);
@@ -173,13 +192,56 @@ export const useTodoStore = defineStore('todo', () => {
 
     // 本地存储备份方法
     const saveTodosLocally = () => {
-        localStorage.setItem('todos', JSON.stringify(todos.value));
+        try {
+            localStorage.setItem('todos', JSON.stringify(todos.value));
+            const ver = String(Date.now())
+            localStorage.setItem('todos_version', ver)
+            todosVersion.value = ver
+            // console.log('[todos] 已保存到 localStorage，todos_version=', todosVersion.value)
+        } catch (e) {
+            console.error('保存 todos 到 localStorage 失败:', e)
+        }
     }
 
-    // 初始化加载数据
-    onMounted(() => {
-        fetchTodos();
-    });
+    // 初始化：从 localStorage 恢复并异步校验版本
+    const loadTodosFromLocal = () => {
+        try {
+            const stored = localStorage.getItem('todos')
+            if (stored) {
+                todos.value = JSON.parse(stored)
+                // console.log('[todos] 从 localStorage 加载，todos_version=', localStorage.getItem('todos_version'))
+            }
+        } catch (e) {
+            console.error('解析本地 todos 失败:', e)
+        }
+    }
+
+    const checkVersionAndUpdate = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+            // console.log('[todos] 请求 /api/version 进行轻量版本校验')
+            const resp = await axios.get(`${API_URL}/version`)
+            if (resp.data && resp.data.success) {
+                const serverTodosVer = resp.data.data.todos
+                // console.log('[todos] 服务器 todos 版本=', serverTodosVer, '本地版本=', todosVersion.value)
+                if (!todosVersion.value || String(todosVersion.value) !== String(serverTodosVer)) {
+                    // console.log('[todos] 版本不一致 -> 将从服务器拉取最新 todos')
+                    await fetchTodos()
+                } else {
+                    // console.log('[todos] 版本一致 -> 使用 localStorage 缓存的 todos')
+                }
+            }
+        } catch (e) {
+            console.error('比较 todos 版本失败:', e)
+        }
+    }
+
+    const initFromLocal = () => {
+        loadTodosFromLocal()
+        setTimeout(() => {
+            checkVersionAndUpdate()
+        }, 0)
+    }
 
     // 检查是否需要刷新（5秒内不重复请求）
     const shouldRefresh = () => {
@@ -196,10 +258,13 @@ export const useTodoStore = defineStore('todo', () => {
         priorities,
         lastFetchTime,
         fetchTodos,
+        todosVersion,
         addTodo,
         toggleTodo,
         removeTodo,
         updateTodo,
-        shouldRefresh
+        shouldRefresh,
+        initFromLocal,
+        checkVersionAndUpdate
     }
 }) 

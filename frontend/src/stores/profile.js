@@ -1,5 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
+import axios from 'axios'
 import profileService from '@/services/profileService'
 
 export const useProfileStore = defineStore('profile', () => {
@@ -53,6 +54,33 @@ export const useProfileStore = defineStore('profile', () => {
     const isLoading = ref(false)
     const error = ref(null)
     const lastFetchTime = ref(0)
+    const profileVersion = ref(localStorage.getItem('profile_version') || null)
+
+    // 从 localStorage 恢复（首次渲染用）
+    const loadProfileFromLocal = () => {
+        try {
+            const stored = localStorage.getItem('profile_data')
+            if (stored) {
+                const data = JSON.parse(stored)
+                profile.value = data.profile || profile.value
+                timeline.value = data.timeline || timeline.value
+                // console.log('[profile] 从 localStorage 加载，profile_version=', localStorage.getItem('profile_version'))
+            }
+        } catch (e) {
+            console.error('解析本地 profile 失败:', e)
+        }
+    }
+
+    const saveProfileToLocal = (data, version) => {
+        try {
+            localStorage.setItem('profile_data', JSON.stringify({ profile: data, timeline: timeline.value }))
+            if (version) localStorage.setItem('profile_version', String(version))
+            profileVersion.value = version || profileVersion.value
+            // console.log('[profile] 已保存到 localStorage，profile_version=', profileVersion.value)
+        } catch (e) {
+            console.error('保存 profile 到 localStorage 失败:', e)
+        }
+    }
 
     // 从服务器获取配置文件
     const fetchProfile = async () => {
@@ -78,6 +106,14 @@ export const useProfileStore = defineStore('profile', () => {
             }
             timeline.value = data.timeline || []
             lastFetchTime.value = Date.now()
+            // 使用服务器的 updatedAt 作为版本（避免本地时间戳与服务器不一致）
+            try {
+                const serverVer = data.updatedAt ? new Date(data.updatedAt).getTime() : Date.now()
+                saveProfileToLocal(profile.value, String(serverVer))
+            } catch (e) {
+                // 回退到使用当前时间作为版本
+                saveProfileToLocal(profile.value, String(Date.now()))
+            }
         } catch (err) {
             error.value = '获取配置文件失败'
             console.error(err)
@@ -192,17 +228,53 @@ export const useProfileStore = defineStore('profile', () => {
         return now - lastFetchTime.value > refreshInterval
     }
 
+    // 轻量版本比对：先请求后端的版本号，若不同则更新数据
+    const checkVersionAndUpdate = async () => {
+        try {
+            const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
+            // console.log('[profile] 请求 /api/version 进行轻量版本校验')
+            const resp = await axios.get(`${API_URL}/version`)
+            if (resp.data && resp.data.success) {
+                const serverProfileVer = resp.data.data.profile
+                // console.log('[profile] 服务器 profile 版本=', serverProfileVer, '本地版本=', profileVersion.value)
+                if (!profileVersion.value || String(profileVersion.value) !== String(serverProfileVer)) {
+                    // console.log('[profile] 版本不一致 -> 将从服务器拉取最新 profile')
+                    // 版本不同，拉取最新数据
+                    await fetchProfile()
+                    // fetchProfile 已保存本地并更新版本
+                } else {
+                    // console.log('[profile] 版本一致 -> 使用 localStorage 缓存的 profile')
+                    // 版本相同，使用本地缓存（已在 loadProfileFromLocal 中加载）
+                }
+            }
+        } catch (e) {
+            console.error('比较 profile 版本失败:', e)
+        }
+    }
+
+    // 初始化：从 localStorage 读取并发起版本检查
+    const initFromLocal = async () => {
+        loadProfileFromLocal()
+        // 异步检查版本（不阻塞渲染）
+        setTimeout(() => {
+            checkVersionAndUpdate()
+        }, 0)
+    }
+
     return { 
         profile, 
         timeline, 
         isLoading, 
         error,
         lastFetchTime,
+        profileVersion,
         fetchProfile,
         updateProfile,
         updateTimeline,
         updateSkills,
         resetProfile,
-        shouldRefresh
+        shouldRefresh,
+        initFromLocal,
+        checkVersionAndUpdate
     }
 }) 

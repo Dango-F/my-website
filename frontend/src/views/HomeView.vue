@@ -5,11 +5,13 @@ import { storeToRefs } from "pinia";
 import HomeSidebar from "@/components/HomeSidebar.vue";
 import RepoCard from "@/components/RepoCard.vue";
 import { onMounted, computed, ref } from "vue";
+import { useTodoStore } from "@/stores/todo";
 import { useSidebarStore } from "@/stores/sidebar";
 import axios from "axios";
 
 const projectStore = useProjectStore();
 const profileStore = useProfileStore();
+const todoStore = useTodoStore();
 const { profile } = storeToRefs(profileStore);
 // 是否正在加载
 const isLoading = ref(false);
@@ -71,7 +73,12 @@ const refreshData = async () => {
 
   try {
     // 刷新项目数据（博客功能已移除）
-    await loadProjects();
+    // 同时触发 profile 和 todos 的轻量版本校验，和项目数据并行执行
+    // console.log('[首页] 手动刷新：触发项目拉取与 profile/todos 版本校验')
+    const jobs = [loadProjects()]
+    if (profileStore.checkVersionAndUpdate) jobs.push(profileStore.checkVersionAndUpdate())
+    if (todoStore.checkVersionAndUpdate) jobs.push(todoStore.checkVersionAndUpdate())
+    await Promise.allSettled(jobs)
 
     refreshMessage.value = {
       show: true,
@@ -107,7 +114,7 @@ onMounted(async () => {
       isLoading.value = false;
     }
   } else {
-    console.log('首页使用有效的缓存数据')
+    // console.log('首页使用有效的缓存数据')
   }
 });
 

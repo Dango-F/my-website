@@ -9,6 +9,7 @@ const authRoutes = require("./routes/auth");
 const todoRoutes = require("./routes/todos");
 const configRoutes = require("./routes/config");
 const profileRoutes = require("./routes/profile");
+const versionRoutes = require("./routes/version");
 
 // 加载环境变量
 dotenv.config();
@@ -38,7 +39,7 @@ const corsOptions = {
   allowedHeaders: ["Content-Type", "Authorization"],
 };
 
-console.log("CORS allowed origins:", allowedOrigins.join(", "));
+// console.log("CORS allowed origins:", allowedOrigins.join(", "));
 
 // 中间件
 app.use(cors(corsOptions));
@@ -53,20 +54,21 @@ app.use("/api/auth", authRoutes);
 app.use("/api/todos", todoRoutes);
 app.use("/api/config", configRoutes);
 app.use("/api/profile", profileRoutes);
+app.use("/api/version", versionRoutes);
 
 // 连接到数据库
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     const { host, name: dbName } = mongoose.connection;
-    console.log(`数据库连接成功 -> host: ${host}, db: ${dbName}`);
+    // console.log(`数据库连接成功 -> host: ${host}, db: ${dbName}`);
     // 启动服务器（展示监听地址和 PORT 来源）
     app.listen(PORT, () => {
-      console.log(
-        `服务器运行在 http://localhost:${PORT} (PORT 来源: ${
-          process.env.PORT ? "环境变量 PORT" : "默认 3000"
-        })`
-      );
+      // console.log(
+      //   `服务器运行在 http://localhost:${PORT} (PORT 来源: ${
+      //     process.env.PORT ? "环境变量 PORT" : "默认 3000"
+      //   })`
+      // );
     });
   })
   .catch((error) => {

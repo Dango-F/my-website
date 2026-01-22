@@ -14,7 +14,7 @@ const authStore = useAuthStore();
 // 页面可见性变化处理（防止休眠导致定时器延迟）
 const handleVisibilityChange = () => {
   if (document.visibilityState === 'visible' && authStore.token) {
-    console.log('页面激活，检查 token 状态');
+    // console.log('页面激活，检查 token 状态');
     authStore.checkTokenExpiration();
   }
 };
@@ -24,11 +24,11 @@ watch(
   () => authStore.token,
   (newToken) => {
     if (newToken) {
-      console.log("用户已登录，调度精准过期定时器");
+      // console.log("用户已登录，调度精准过期定时器");
       // 如果是从 localStorage 恢复的 token，需要调度定时器
       authStore.scheduleTokenExpiry();
     } else {
-      console.log("用户已登出");
+      // console.log("用户已登出");
     }
   },
   { immediate: true }

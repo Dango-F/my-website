@@ -58,10 +58,10 @@ const loadGitHubTokenFromServer = async () => {
             // 1. 没有缓存数据时
             // 2. 缓存已过期（超过1小时）时
             if (projectStore.projects.length === 0 || projectStore.shouldRefresh()) {
-                console.log('缓存无效或已过期，从 GitHub API 加载数据')
+                    // console.log('缓存无效或已过期，从 GitHub API 加载数据')
                 await loadGitHubRepos();
             } else {
-                console.log('使用有效的缓存数据，最后更新于:', 
+                    // console.log('使用有效的缓存数据，最后更新于:', 
                     new Date(parseInt(projectStore.lastFetchTime)).toLocaleString())
             }
         }
