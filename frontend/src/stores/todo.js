@@ -262,6 +262,17 @@ export const useTodoStore = defineStore('todo', () => {
         }, 0)
     }
 
+    // 将上次版本检查标记为当前时间（用于手动强刷后重置防抖）
+    const markVersionCheckedNow = () => {
+        try {
+            const now = Date.now()
+            lastVersionCheck.value = now
+            localStorage.setItem('todos_last_version_check', String(now))
+        } catch (e) {
+            console.error('设置 todos_last_version_check 失败:', e)
+        }
+    }
+
     // 检查是否需要刷新（5秒内不重复请求）
     const shouldRefresh = () => {
         const now = Date.now()
@@ -285,5 +296,6 @@ export const useTodoStore = defineStore('todo', () => {
         shouldRefresh,
         initFromLocal,
         checkVersionAndUpdate
+        ,markVersionCheckedNow
     }
 }) 

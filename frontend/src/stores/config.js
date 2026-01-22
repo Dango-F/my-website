@@ -35,6 +35,17 @@ export const useConfigStore = defineStore('config', {
       }
     },
 
+    // 将上次版本检查标记为当前时间（用于手动强刷后重置防抖）
+    markVersionCheckedNow() {
+      try {
+        const now = Date.now()
+        this.lastVersionCheck = now
+        localStorage.setItem('config_last_version_check', String(now))
+      } catch (err) {
+        console.error('设置 config_last_version_check 失败:', err)
+      }
+    },
+
     // 保存到 localStorage
     saveToLocal() {
       try {

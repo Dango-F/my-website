@@ -82,6 +82,31 @@ const refreshData = async () => {
     if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())
     await Promise.allSettled(jobs)
 
+    // 强刷新后重置 30 分钟版本检查门（防止随后短时间内重复触发版本校验）
+    try {
+      const now = Date.now()
+      // profile
+      if (profileStore && profileStore.markVersionCheckedNow) {
+        profileStore.markVersionCheckedNow()
+      } else {
+        localStorage.setItem('profile_last_version_check', String(now))
+      }
+      // todos
+      if (todoStore && todoStore.markVersionCheckedNow) {
+        todoStore.markVersionCheckedNow()
+      } else {
+        localStorage.setItem('todos_last_version_check', String(now))
+      }
+      // config
+      if (configStore && configStore.markVersionCheckedNow) {
+        configStore.markVersionCheckedNow()
+      } else {
+        localStorage.setItem('config_last_version_check', String(now))
+      }
+    } catch (e) {
+      console.error('[手动刷新] 重置 30 分钟门失败:', e)
+    }
+
     refreshMessage.value = {
       show: true,
       text: "数据刷新成功！",
