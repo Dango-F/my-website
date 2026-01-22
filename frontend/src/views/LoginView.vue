@@ -2,13 +2,14 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { UserCircleIcon, LockClosedIcon, ArrowRightOnRectangleIcon } from '@heroicons/vue/24/outline'
+import { UserCircleIcon, LockClosedIcon, ArrowRightOnRectangleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 
 const authStore = useAuthStore()
 const router = useRouter()
 
 const username = ref('')
 const password = ref('')
+const showPassword = ref(false)
 
 const handleLogin = async () => {
   if (!username.value || !password.value) return
@@ -60,13 +61,23 @@ const handleLogin = async () => {
               <label class="text-sm font-medium text-gray-700 dark:text-gray-300 ml-1">密码</label>
               <div class="relative">
                 <input 
-                  type="password" 
+                  :type="showPassword ? 'text' : 'password'" 
                   v-model="password"
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none text-gray-800 dark:text-gray-200"
+                  class="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500 transition-all outline-none text-gray-800 dark:text-gray-200"
                   placeholder="请输入密码"
                   required
                 />
                 <LockClosedIcon class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+                <button
+                  type="button"
+                  class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  :aria-label="showPassword ? '隐藏密码' : '显示密码'"
+                  @click="showPassword = !showPassword"
+                  :disabled="authStore.isLoading"
+                >
+                  <EyeSlashIcon v-if="showPassword" class="w-5 h-5" />
+                  <EyeIcon v-else class="w-5 h-5" />
+                </button>
               </div>
             </div>
 

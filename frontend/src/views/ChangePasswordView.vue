@@ -2,7 +2,7 @@
 import { ref } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter } from 'vue-router'
-import { LockClosedIcon, KeyIcon, CheckCircleIcon, UserCircleIcon } from '@heroicons/vue/24/outline'
+import { LockClosedIcon, KeyIcon, CheckCircleIcon, UserCircleIcon, EyeIcon, EyeSlashIcon } from '@heroicons/vue/24/outline'
 import axios from 'axios'
 
 const authStore = useAuthStore()
@@ -15,6 +15,9 @@ const confirmPassword = ref('')
 const error = ref(null)
 const success = ref(false)
 const isLoading = ref(false)
+const showCurrentPassword = ref(false)
+const showNewPassword = ref(false)
+const showConfirmPassword = ref(false)
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
 
@@ -201,14 +204,24 @@ const goBack = () => {
               </label>
               <div class="relative">
                 <input 
-                  type="password" 
+                  :type="showCurrentPassword ? 'text' : 'password'" 
                   v-model="currentPassword"
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
+                  class="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
                   placeholder="输入当前密码"
                   required
                   :disabled="isLoading || success"
                 />
                 <LockClosedIcon class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+                <button
+                  type="button"
+                  class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  :aria-label="showCurrentPassword ? '隐藏当前密码' : '显示当前密码'"
+                  @click="showCurrentPassword = !showCurrentPassword"
+                  :disabled="isLoading || success"
+                >
+                  <EyeSlashIcon v-if="showCurrentPassword" class="w-5 h-5" />
+                  <EyeIcon v-else class="w-5 h-5" />
+                </button>
               </div>
             </div>
 
@@ -219,14 +232,24 @@ const goBack = () => {
               </label>
               <div class="relative">
                 <input 
-                  type="password" 
+                  :type="showNewPassword ? 'text' : 'password'" 
                   v-model="newPassword"
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
+                  class="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
                   placeholder="至少6个字符，留空则不修改"
                   minlength="6"
                   :disabled="isLoading || success"
                 />
                 <KeyIcon class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+                <button
+                  type="button"
+                  class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  :aria-label="showNewPassword ? '隐藏新密码' : '显示新密码'"
+                  @click="showNewPassword = !showNewPassword"
+                  :disabled="isLoading || success"
+                >
+                  <EyeSlashIcon v-if="showNewPassword" class="w-5 h-5" />
+                  <EyeIcon v-else class="w-5 h-5" />
+                </button>
               </div>
             </div>
 
@@ -237,13 +260,23 @@ const goBack = () => {
               </label>
               <div class="relative">
                 <input 
-                  type="password" 
+                  :type="showConfirmPassword ? 'text' : 'password'" 
                   v-model="confirmPassword"
-                  class="w-full pl-10 pr-4 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
+                  class="w-full pl-10 pr-12 py-3 bg-gray-50 dark:bg-gray-900/50 border border-gray-200 dark:border-gray-600 rounded-xl focus:ring-2 focus:ring-purple-500/50 focus:border-purple-500 transition-all outline-none text-gray-800 dark:text-gray-200"
                   placeholder="再次输入新密码"
                   :disabled="isLoading || success"
                 />
                 <LockClosedIcon class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
+                <button
+                  type="button"
+                  class="absolute right-3 top-3.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  :aria-label="showConfirmPassword ? '隐藏确认密码' : '显示确认密码'"
+                  @click="showConfirmPassword = !showConfirmPassword"
+                  :disabled="isLoading || success"
+                >
+                  <EyeSlashIcon v-if="showConfirmPassword" class="w-5 h-5" />
+                  <EyeIcon v-else class="w-5 h-5" />
+                </button>
               </div>
             </div>
 
