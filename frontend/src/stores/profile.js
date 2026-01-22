@@ -55,6 +55,8 @@ export const useProfileStore = defineStore('profile', () => {
     const error = ref(null)
     const lastFetchTime = ref(0)
     const profileVersion = ref(localStorage.getItem('profile_version') || null)
+    // 上次执行版本校验的时间（用于防抖，单位：ms）
+    const lastVersionCheck = ref(Number(localStorage.getItem('profile_last_version_check') || 0))
 
     // 从 localStorage 恢复（首次渲染用）
     const loadProfileFromLocal = () => {
@@ -230,6 +232,22 @@ export const useProfileStore = defineStore('profile', () => {
 
     // 轻量版本比对：先请求后端的版本号，若不同则更新数据
     const checkVersionAndUpdate = async () => {
+        // 30 分钟防抖：如果上次校验在 30 分钟之内则跳过
+        try {
+            const now = Date.now()
+            const debounceMs = 30 * 60 * 1000 // 30 分钟
+            if (lastVersionCheck.value && now - Number(lastVersionCheck.value) < debounceMs) {
+                const hasLocal = !!localStorage.getItem('profile_data')
+                if (hasLocal) console.log('[缓存] profile：30分钟内已检查，跳过版本校验，使用 localStorage')
+                return
+            }
+            // 标记为已检查（防止短时间重复触发）
+            lastVersionCheck.value = now
+            localStorage.setItem('profile_last_version_check', String(now))
+        } catch (e) {
+            // 若防抖逻辑异常，不影响后续流程
+            console.error('profile 防抖检查错误:', e)
+        }
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
             const hasLocal = !!localStorage.getItem('profile_data')

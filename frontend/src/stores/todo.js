@@ -9,6 +9,8 @@ export const useTodoStore = defineStore('todo', () => {
     const error = ref(null);
     const lastFetchTime = ref(0);
     const todosVersion = ref(localStorage.getItem('todos_version') || null)
+    // 上次执行版本校验的时间（用于防抖，单位：ms）
+    const lastVersionCheck = ref(Number(localStorage.getItem('todos_last_version_check') || 0))
 
     // 添加默认分类列表
     const defaultCategories = ['工作', '学习', '生活', '娱乐', '其他']
@@ -217,6 +219,22 @@ export const useTodoStore = defineStore('todo', () => {
     }
 
     const checkVersionAndUpdate = async () => {
+        // 30 分钟防抖：如果上次校验在 30 分钟之内则跳过
+        try {
+            const now = Date.now()
+            const debounceMs = 30 * 60 * 1000 // 30 分钟
+            if (lastVersionCheck.value && now - Number(lastVersionCheck.value) < debounceMs) {
+                const hasLocal = !!localStorage.getItem('todos')
+                if (hasLocal) console.log('[缓存] todos：30分钟内已检查，跳过版本校验，使用 localStorage')
+                return
+            }
+            // 标记为已检查（防止短时间重复触发）
+            lastVersionCheck.value = now
+            localStorage.setItem('todos_last_version_check', String(now))
+        } catch (e) {
+            // 若防抖逻辑异常，不影响后续流程
+            console.error('todos 防抖检查错误:', e)
+        }
         try {
             const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api'
             const hasLocal = !!localStorage.getItem('todos')
