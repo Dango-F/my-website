@@ -238,7 +238,7 @@ export const useProfileStore = defineStore('profile', () => {
             const debounceMs = 30 * 60 * 1000 // 30 分钟
             if (lastVersionCheck.value && now - Number(lastVersionCheck.value) < debounceMs) {
                 const hasLocal = !!localStorage.getItem('profile_data')
-                if (hasLocal) console.log('[缓存] profile：30分钟内已检查，跳过版本校验，使用 localStorage')
+                // console.log('[缓存] profile：30分钟内已检查，跳过版本校验，使用 localStorage')
                 return
             }
             // 标记为已检查（防止短时间重复触发）
@@ -256,20 +256,20 @@ export const useProfileStore = defineStore('profile', () => {
                 const serverProfileVer = resp.data.data.profile
                 if (!profileVersion.value || String(profileVersion.value) !== String(serverProfileVer)) {
                     await fetchProfile()
-                    if (hasLocal) {
-                        console.log('[缓存] profile：本地缓存存在，但版本不一致，已从服务器加载最新数据')
-                    } else {
-                        console.log('[缓存] profile：无本地缓存，已从服务器加载')
-                    }
+                    // if (hasLocal) {
+                    //     console.log('[缓存] profile：本地缓存存在，但版本不一致，已从服务器加载最新数据')
+                    // } else {
+                    //     console.log('[缓存] profile：无本地缓存，已从服务器加载')
+                    // }
                 } else {
-                    console.log('[缓存] profile：使用 localStorage（版本一致）')
+                    // console.log('[缓存] profile：使用 localStorage（版本一致）')
                 }
             }
         } catch (e) {
             // 版本比较失败时保留错误输出，但仍可回退到本地缓存
             console.error('比较 profile 版本失败:', e)
             const hasLocal = !!localStorage.getItem('profile_data')
-            if (hasLocal) console.log('[缓存] profile：版本比较失败，回退使用 localStorage')
+            // if (hasLocal) console.log('[缓存] profile：版本比较失败，回退使用 localStorage')
         }
     }
 
