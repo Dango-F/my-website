@@ -61,8 +61,7 @@ const loadGitHubTokenFromServer = async () => {
                     // console.log('缓存无效或已过期，从 GitHub API 加载数据')
                 await loadGitHubRepos();
             } else {
-                    // console.log('使用有效的缓存数据，最后更新于:', 
-                    new Date(parseInt(projectStore.lastFetchTime)).toLocaleString())
+                // console.log('使用有效的缓存数据，最后更新于:', new Date(parseInt(projectStore.lastFetchTime)).toLocaleString())
             }
         }
     } catch (error) {
