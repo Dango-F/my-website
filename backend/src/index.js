@@ -16,8 +16,26 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// CORS 配置：生产环境支持指定域名
+const corsOptions = {
+  origin: function (origin, callback) {
+    // 允许的来源列表（从环境变量读取，用逗号分隔）
+    const allowedOrigins = process.env.CORS_ORIGINS
+      ? process.env.CORS_ORIGINS.split(",").map((o) => o.trim())
+      : ["http://localhost:5173", "http://localhost:3000"];
+
+    // 开发环境或请求来源在允许列表中
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes("*")) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true, // 允许发送 Cookie
+};
+
 // 中间件
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -34,10 +52,15 @@ app.use("/api/profile", profileRoutes);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
-    console.log("数据库连接成功");
-    // 启动服务器
+    const { host, name: dbName } = mongoose.connection;
+    console.log(`数据库连接成功 -> host: ${host}, db: ${dbName}`);
+    // 启动服务器（展示监听地址和 PORT 来源）
     app.listen(PORT, () => {
-      console.log(`服务器运行在 http://localhost:${PORT}`);
+      console.log(
+        `服务器运行在 http://localhost:${PORT} (PORT 来源: ${
+          process.env.PORT ? "环境变量 PORT" : "默认 3000"
+        })`
+      );
     });
   })
   .catch((error) => {
