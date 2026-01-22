@@ -86,11 +86,12 @@ const handleSubmit = async () => {
 
     // 再修改用户名（如果需要）
     if (isChangingUsername) {
+      const passwordForUsername = isChangingPassword ? newPassword.value : currentPassword.value
       const response = await axios.put(
         `${API_URL}/auth/username`,
         {
           newUsername: newUsername.value,
-          password: currentPassword.value
+          password: passwordForUsername
         },
         {
           headers: {
