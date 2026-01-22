@@ -72,11 +72,14 @@ const refreshData = async () => {
   isRefreshing.value = true;
 
   try {
-  // 强刷新：项目 + profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
-  const jobs = [loadProjects()]
-  if (profileStore.fetchProfile) jobs.push(profileStore.fetchProfile())
-  if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())
-  await Promise.allSettled(jobs)
+    // 强刷新：项目 + profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
+    const hasProfileLocal = !!localStorage.getItem('profile_data')
+    const hasTodosLocal = !!localStorage.getItem('todos')
+    console.log('[手动刷新] 强刷新触发：local profile exists=', hasProfileLocal, ', local todos exists=', hasTodosLocal)
+    const jobs = [loadProjects()]
+    if (profileStore.fetchProfile) jobs.push(profileStore.fetchProfile())
+    if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())
+    await Promise.allSettled(jobs)
 
     refreshMessage.value = {
       show: true,

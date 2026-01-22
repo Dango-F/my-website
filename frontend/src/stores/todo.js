@@ -211,7 +211,7 @@ export const useTodoStore = defineStore('todo', () => {
             const stored = localStorage.getItem('todos')
             if (stored) {
                 todos.value = JSON.parse(stored)
-                // console.log('[todos] 从 localStorage 加载，todos_version=', localStorage.getItem('todos_version'))
+                console.log('[缓存] todos：已从 localStorage 恢复用于渲染，todos_version=', localStorage.getItem('todos_version'))
             }
         } catch (e) {
             console.error('解析本地 todos 失败:', e)
@@ -225,7 +225,7 @@ export const useTodoStore = defineStore('todo', () => {
             const debounceMs = 30 * 60 * 1000 // 30 分钟
             if (lastVersionCheck.value && now - Number(lastVersionCheck.value) < debounceMs) {
                 const hasLocal = !!localStorage.getItem('todos')
-                // if (hasLocal) console.log('[缓存] todos：30分钟内已检查，跳过版本校验，使用 localStorage')
+                console.log('[缓存] todos：30分钟内已检查，跳过版本校验，使用 localStorage=', hasLocal)
                 return
             }
             // 标记为已检查（防止短时间重复触发）
@@ -242,14 +242,10 @@ export const useTodoStore = defineStore('todo', () => {
             if (resp.data && resp.data.success) {
                 const serverTodosVer = resp.data.data.todos
                 if (!todosVersion.value || String(todosVersion.value) !== String(serverTodosVer)) {
+                    console.log('[缓存] todos：版本不一致，准备从服务器拉取最新数据 (local exists=', hasLocal, ')')
                     await fetchTodos()
-                    // if (hasLocal) {
-                    //     console.log('[缓存] todos：本地缓存存在，但版本不一致，已从服务器加载最新数据')
-                    // } else {
-                    //     console.log('[缓存] todos：无本地缓存，已从服务器加载')
-                    // }
                 } else {
-                    // console.log('[缓存] todos：使用 localStorage（版本一致）')
+                    console.log('[缓存] todos：版本一致，使用 localStorage 渲染')
                 }
             }
         } catch (e) {

@@ -36,8 +36,7 @@ watch(
 
 // 组件挂载时加载Profile
 onMounted(async () => {
-  // 优先从 localStorage 恢复渲染，再在后台按需校验/拉取（30 分钟防抖由 store 管理）
-  profileStore.initFromLocal && profileStore.initFromLocal()
+  // localStorage 恢复已在 main.js 执行，这里避免重复调用
   
   // 添加页面可见性监听（防止休眠导致定时器延迟）
   document.addEventListener('visibilitychange', handleVisibilityChange);

@@ -47,8 +47,8 @@ const router = createRouter({
 // Previously there was a smart refresh guard based on 5s debounce.
 // That logic was removed in favor of a lightweight version check on app init.
 router.beforeEach((to, from, next) => {
-  // Skip login page or initial load
-  if (to.path === "/login" || !from.path) {
+  // Skip login page or initial load (initial navigation has empty matched)
+  if (to.path === "/login" || from.matched.length === 0) {
     next();
     return;
   }
