@@ -4,14 +4,29 @@ import ProfileSidebar from '@/components/ProfileSidebar.vue'
 import { useSidebarStore } from '@/stores/sidebar'
 import { computed } from 'vue'
 import { useTodoStore } from '@/stores/todo'
+import { allowRequest } from '@/utils/requestThrottle'
+import { ref } from 'vue'
 
 const sidebarStore = useSidebarStore()
 const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const todoStore = useTodoStore()
 
+const todoBlocked = ref(false)
 const refreshTodos = async () => {
-    if (todoStore.isLoading) return
-    await todoStore.fetchTodos()
+    if (todoStore.isLoading || todoBlocked.value) return
+
+    if (!allowRequest('todos-refresh')) {
+        todoBlocked.value = true
+        setTimeout(() => { todoBlocked.value = false }, 5000)
+        return
+    }
+
+    todoBlocked.value = true
+    try {
+        await todoStore.fetchTodos()
+    } finally {
+        setTimeout(() => { todoBlocked.value = false }, 5000)
+    }
 }
 </script>
 
@@ -28,7 +43,7 @@ const refreshTodos = async () => {
             <div>
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-bold">待办事项</h1>
-                    <button @click="refreshTodos" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center" :disabled="todoStore.isLoading">
+                    <button @click="refreshTodos" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center" :disabled="todoStore.isLoading || todoBlocked">
                         <svg v-if="todoStore.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>

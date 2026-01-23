@@ -1,6 +1,7 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { allowRequest } from '@/utils/requestThrottle'
+import { allowRequest } from '@/utils/requestThrottle'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useProfileStore } from '@/stores/profile'
@@ -106,24 +107,51 @@ const saveGitHubTokenToServer = async (token) => {
     }
 };
 
-// 修改加载GitHub仓库函数（使用共享请求单例）
+// 防抖状态，控制按钮禁用以改善 UX
+const projectBlocked = ref(false)
+
+// 修改加载GitHub仓库函数（使用共享请求单例 + 5s 防抖）
 const loadGitHubRepos = async () => {
-    if (!allowRequest('projects-refresh')) return;
-    if (githubUsername.value) {
-        // 使用共享请求模式：如果预热正在进行，会自动等待；否则正常加载
-        await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value, { useSharedPromise: true });
+    if (projectBlocked.value) return
+    // allowRequest 内部默认 5000ms
+    if (!allowRequest('projects-refresh')) {
+        // 同步本地阻塞状态以禁用按钮
+        projectBlocked.value = true
+        setTimeout(() => { projectBlocked.value = false }, 5000)
+        return
     }
-};
+
+    projectBlocked.value = true
+    try {
+        if (githubUsername.value) {
+            await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value, { useSharedPromise: true })
+        }
+    } finally {
+        // 保持本地禁用 5s，防止连点
+        setTimeout(() => { projectBlocked.value = false }, 5000)
+    }
+}
 
 // 强制刷新函数（赋予最高优先级，无视并发保护）
 const forceRefreshGitHubRepos = async () => {
-    if (githubUsername.value) {
-        console.log("🔄 手动强制刷新项目数据...");
-        // 使用强制刷新模式，会中断当前请求并重新开始
-        await projectStore.forceRefreshGitHubRepos(githubUsername.value, githubToken.value);
-        console.log("✅ 强制刷新完成");
+    if (projectBlocked.value) return
+    if (!allowRequest('projects-refresh')) {
+        projectBlocked.value = true
+        setTimeout(() => { projectBlocked.value = false }, 5000)
+        return
     }
-};
+
+    projectBlocked.value = true
+    try {
+        if (githubUsername.value) {
+            console.log("🔄 手动强制刷新项目数据...")
+            await projectStore.forceRefreshGitHubRepos(githubUsername.value, githubToken.value)
+            console.log("✅ 强制刷新完成")
+        }
+    } finally {
+        setTimeout(() => { projectBlocked.value = false }, 5000)
+    }
+}
 
 // 应用GitHub Token
 const applyGitHubToken = async () => {
@@ -259,7 +287,7 @@ onMounted(async () => {
 
                         <button @click="forceRefreshGitHubRepos"
                             class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
-                            :disabled="projectStore.loading">
+                            :disabled="projectStore.loading || projectBlocked">
                             <span v-if="projectStore.loading">获取中...</span>
                             <span v-else>刷新</span>
                         </button>
@@ -343,11 +371,12 @@ onMounted(async () => {
                 </div>
 
                 <!-- 提示用户加载数据 -->
-                <div v-else-if="!preheating && projectStore.projects.length === 0 && !projectStore.lastFetchTime"
+                    <div v-else-if="!preheating && projectStore.projects.length === 0 && !projectStore.lastFetchTime"
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
-                        class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700">
+                        class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
+                        :disabled="projectStore.loading || projectBlocked">
                         从GitHub获取仓库
                     </button>
                 </div>
@@ -386,8 +415,8 @@ onMounted(async () => {
                     </div>
                 </div>
 
-                <!-- 项目列表 -->
-                <div v-if="!projectStore.loading && filteredProjects.length" class="space-y-4">
+                <!-- 项目列表（仅在非预热且非加载时显示） -->
+                <div v-if="!projectStore.loading && !preheating && filteredProjects.length" class="space-y-4">
                     <RepoCard v-for="project in paginatedProjects" :key="project.id" :project="project" />
 
                     <!-- 分页器 -->
