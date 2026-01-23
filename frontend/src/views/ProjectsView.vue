@@ -440,10 +440,6 @@ onMounted(async () => {
                             class="px-3 py-1 border rounded-md" title="尾页">尾页</button>
                     </div>
                 </div>
-                <div v-else-if="!projectStore.loading && projectStore.projects.length > 0"
-                    class="text-center py-10 text-github-gray">
-                    没有找到符合条件的项目
-                </div>
             </div>
         </div>
     </div>
