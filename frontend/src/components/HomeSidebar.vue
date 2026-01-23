@@ -73,7 +73,7 @@ const onDragEnd = () => {
 
 <template>
   <div
-    class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm sticky top-20 max-w-[300px]"
+    class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm max-w-[300px]"
   >
     <!-- 个人信息部分 -->
     <div class="flex flex-col items-center text-center p-4">

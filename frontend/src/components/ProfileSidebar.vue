@@ -91,7 +91,7 @@ const onDragEnd = () => {
     <transition name="fade">
       <div
         v-if="!isCollapsed"
-        class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm sticky top-20 relative transition-all duration-300 max-w-[300px]"
+        class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm relative transition-all duration-300 max-w-[300px]"
       >
         <!-- 展开状态的折叠按钮 -->
         <button

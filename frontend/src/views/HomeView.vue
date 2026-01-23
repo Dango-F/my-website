@@ -1,74 +1,67 @@
 <script setup>
-import { useProjectStore } from "@/stores/project";
 import { useProfileStore } from "@/stores/profile";
-import { useConfigStore } from "@/stores/config";
 import { storeToRefs } from "pinia";
 import HomeSidebar from "@/components/HomeSidebar.vue";
-import RepoCard from "@/components/RepoCard.vue";
-import { onMounted, computed, ref } from "vue";
+import { onMounted, ref } from "vue";
 import { allowRequest } from '@/utils/requestThrottle'
 import { useTodoStore } from "@/stores/todo";
 import { useSidebarStore } from "@/stores/sidebar";
-import axios from "axios";
 
-const projectStore = useProjectStore();
 const profileStore = useProfileStore();
-const configStore = useConfigStore();
 const todoStore = useTodoStore();
 const { profile } = storeToRefs(profileStore);
-// 是否正在加载
-const isLoading = ref(false);
 const sidebarStore = useSidebarStore();
-const activeTab = ref("projects");
 
 // 手动刷新相关状态
 const isRefreshing = ref(false);
 const refreshMessage = ref({ show: false, text: "", isError: false });
 
-// 博客功能已删除
-const recentPosts = computed(() => []);
+// 打字效果相关状态
+const currentText = ref("");
+const isTyping = ref(false);
+const typingLines = [
+  // 关联上个人资料中的名称字段
+  `Hi there, I'm ${profile.value.name || 'Dango-F'}!`,
+  "Focusing on Spatial Intelligence.",
+  "Exploring Embodied Intelligence."
+];
 
-// 获取热门项目（最多3个）- 使用 computed 属性，这样在 projects 更新时会自动重新计算
-const topProjects = computed(() => {
-  return projectStore.projects
-    .slice()
-    .sort((a, b) => b.stars - a.stars)
-    .slice(0, 3);
-});
+// 打字效果函数
+const typeWriter = async () => {
+  if (isTyping.value) return;
+  isTyping.value = true;
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:3000/api";
+  while (true) { // 无限循环
+    for (let lineIndex = 0; lineIndex < typingLines.length; lineIndex++) {
+      const line = typingLines[lineIndex];
 
-// 从 config store 获取 GitHub Token
-const getGithubTokenFromServer = async () => {
-  try {
-    // 使用 config store 而不是直接调用 API
-    await configStore.checkVersionAndUpdate()
-    return configStore.githubToken || ""
-  } catch (error) {
-    console.error("获取GitHub Token失败:", error);
+      // 打字效果：逐字显示
+      for (let i = 0; i < line.length; i++) {
+        currentText.value += line[i];
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+
+      // 等待一段时间
+      await new Promise(resolve => setTimeout(resolve, 1500));
+
+      // 退格效果：逐字删除
+      for (let i = line.length; i > 0; i--) {
+        currentText.value = currentText.value.slice(0, -1);
+        await new Promise(resolve => setTimeout(resolve, 50));
+      }
+
+      // 如果不是最后一行，等待一段时间再开始下一行
+      if (lineIndex < typingLines.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+
+    // 循环结束后等待一段时间再重新开始
+    await new Promise(resolve => setTimeout(resolve, 1000));
   }
-  return "";
 };
 
-// 项目数据加载函数
-const loadProjects = async () => {
-  try {
-    // 从服务器获取Token
-    const token = await getGithubTokenFromServer();
-
-    // 调用 API 获取数据
-    await projectStore.fetchGitHubRepos(
-      profileStore.profile.github_username,
-      token
-    );
-    return projectStore.projects;
-  } catch (error) {
-    console.error("获取 GitHub 仓库失败:", error);
-    return [];
-  }
-};
-
-// 修改刷新数据函数
+// 手动刷新数据函数
 const refreshData = async () => {
   if (isRefreshing.value) return;
   if (!allowRequest('home-refresh')) {
@@ -79,11 +72,10 @@ const refreshData = async () => {
   isRefreshing.value = true;
 
   try {
-    // 强刷新：项目 + profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
-    const hasProfileLocal = !!localStorage.getItem('profile_data')
+    // 强刷新：profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
     const hasTodosLocal = !!localStorage.getItem('todos')
-    // console.log('[手动刷新] 强刷新触发：local profile exists=', hasProfileLocal, ', local todos exists=', hasTodosLocal)
-    const jobs = [loadProjects()]
+    // console.log('[手动刷新] 强刷新触发：local todos exists=', hasTodosLocal)
+    const jobs = []
     if (profileStore.fetchProfile) jobs.push(profileStore.fetchProfile())
     if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())
     await Promise.allSettled(jobs)
@@ -102,12 +94,6 @@ const refreshData = async () => {
         todoStore.markVersionCheckedNow()
       } else {
         localStorage.setItem('todos_last_version_check', String(now))
-      }
-      // config
-      if (configStore && configStore.markVersionCheckedNow) {
-        configStore.markVersionCheckedNow()
-      } else {
-        localStorage.setItem('config_last_version_check', String(now))
       }
     } catch (e) {
       console.error('[手动刷新] 重置 30 分钟门失败:', e)
@@ -136,25 +122,14 @@ const refreshData = async () => {
 
 // 初始化
 onMounted(async () => {
-  // 智能加载：只在没有数据或缓存过期时才加载
-  if (projectStore.projects.length === 0 || projectStore.shouldRefresh()) {
-    isLoading.value = true;
-    try {
-      await loadProjects();
-    } catch (error) {
-      console.error("初始加载数据失败:", error);
-    } finally {
-      isLoading.value = false;
-    }
-  } else {
-    // console.log('首页使用有效的缓存数据')
-  }
+  // 启动打字效果
+  typeWriter();
 });
 
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-6">
+  <div class="container mx-auto px-4 py-8">
     <div
       class="grid grid-cols-1 md:grid-cols-4 gap-6"
       :class="{ 'md:grid-cols-[300px_1fr]': true }"
@@ -267,60 +242,70 @@ onMounted(async () => {
           <!-- 博客功能已移除，此区块不再展示 -->
         </section>
 
-        <!-- 热门项目 -->
-        <section>
-          <div class="flex justify-between items-center mb-4">
-            <h2 class="text-xl font-semibold">热门项目</h2>
-            <router-link
-              to="/projects"
-              class="text-github-blue hover:underline"
-            >
-              查看全部
-            </router-link>
-          </div>
-
-          <!-- 错误提示 -->
-          <div
-            v-if="projectStore.error"
-            class="bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800 p-3 rounded-md mb-4"
-          >
-            <p class="text-red-600 dark:text-red-400 text-sm">
-              {{ projectStore.error }}
+        <!-- GitHub README 风格展示 -->
+        <section class="text-center">
+          <!-- 动态打字效果标题 -->
+          <div class="mb-8">
+            <div class="text-4xl font-bold mb-2 h-16 flex items-center justify-center">
+              <span class="text-github-blue">{{ currentText }}</span>
+              <span v-if="isTyping" class="animate-pulse">|</span>
+            </div>
+            <p class="text-lg text-gray-800 dark:text-gray-200 mb-2">
+              Master's Student in Computer Applied Technology
             </p>
-            <div class="mt-2 flex items-center justify-between">
-              <p class="text-xs text-gray-500 dark:text-gray-400">
-                需要 GitHub Token 来解决 API 限制问题
-              </p>
-              <router-link
-                to="/projects"
-                class="text-xs bg-github-blue text-white px-3 py-1 rounded-md hover:bg-blue-700"
-              >
-                配置 Token
-              </router-link>
-            </div>
+            <p class="text-sm text-gray-700 dark:text-gray-300">
+              University of Chinese Academy of Sciences (UCAS) - School of Engineering Science (ES)
+            </p>
+            <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
+              Research Interests: Spatial Intelligence & Embodied Intelligence
+            </p>
           </div>
 
-          <!-- 加载状态 -->
-          <div v-else-if="isLoading" class="py-4 flex justify-center">
-            <div
-              class="animate-spin h-6 w-6 border-4 border-github-blue border-t-transparent rounded-full"
-            ></div>
-          </div>
-
-          <!-- 项目列表 -->
-          <div v-else class="space-y-4">
-            <div
-              v-if="topProjects.length === 0"
-              class="text-gray-500 py-4 text-center"
-            >
-              暂无项目数据
-            </div>
-            <RepoCard
-              v-else
-              v-for="project in topProjects"
-              :key="project.id"
-              :project="project"
+          <!-- GitHub 统计卡片 -->
+          <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
+            <img
+              :src="`https://github-readme-stats.vercel.app/api?username=${profile.github_username || 'Dango-F'}&show_icons=true&theme=tokyonight&hide_border=true&bg_color=00000000`"
+              class="h-48 rounded-lg shadow-lg"
+              alt="GitHub Stats"
             />
+            <img
+              :src="`https://github-readme-stats.vercel.app/api/top-langs/?username=${profile.github_username || 'Dango-F'}&layout=compact&theme=tokyonight&hide_border=true&bg_color=00000000`"
+              class="h-44 rounded-lg shadow-lg"
+              alt="Top Languages"
+            />
+          </div>
+
+          <!-- 技能徽章区域 -->
+          <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">Tech Stack</h3>
+            <div class="flex flex-wrap justify-center gap-2">
+              <img src="https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white" alt="Python" />
+              <img src="https://img.shields.io/badge/PyTorch-EE4C2C?style=for-the-badge&logo=pytorch&logoColor=white" alt="PyTorch" />
+              <img src="https://img.shields.io/badge/C%2B%2B-00599C?style=for-the-badge&logo=c%2B%2B&logoColor=white" alt="C++" />
+              <img src="https://img.shields.io/badge/Vue.js-35495E?style=for-the-badge&logo=vue.js&logoColor=4FC08D" alt="Vue.js" />
+            </div>
+          </div>
+
+          <!-- 贡献图动画 -->
+          <div class="mb-8">
+            <h3 class="text-xl font-semibold mb-4">Contribution</h3>
+            <div class="flex justify-center">
+              <picture class="max-w-full">
+                <source
+                  media="(prefers-color-scheme: dark)"
+                  :srcset="`https://raw.githubusercontent.com/${profile.github_username || 'Dango-F'}/${profile.github_username || 'Dango-F'}/output/github-contribution-grid-snake-dark.svg`"
+                />
+                <source
+                  media="(prefers-color-scheme: light)"
+                  :srcset="`https://raw.githubusercontent.com/${profile.github_username || 'Dango-F'}/${profile.github_username || 'Dango-F'}/output/github-contribution-grid-snake.svg`"
+                />
+                <img
+                  :src="`https://raw.githubusercontent.com/${profile.github_username || 'Dango-F'}/${profile.github_username || 'Dango-F'}/output/github-contribution-grid-snake.svg`"
+                  alt="github contribution grid snake animation"
+                  class="rounded-lg shadow-lg max-w-full h-auto"
+                />
+              </picture>
+            </div>
           </div>
         </section>
       </div>

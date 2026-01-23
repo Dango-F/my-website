@@ -195,7 +195,7 @@ onMounted(async () => {
 </script>
 
 <template>
-    <div class="container mx-auto px-4 py-6">
+    <div class="container mx-auto px-4 py-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6"
             :class="{ 'md:grid-cols-[300px_1fr]': !isCollapsed, 'md:grid-cols-[auto_1fr]': isCollapsed }">
             <!-- 侧边栏 -->
@@ -369,6 +369,9 @@ onMounted(async () => {
 
                     <!-- 分页器 -->
                     <div class="flex items-center justify-center gap-2 mt-4">
+                        <button @click="currentPage = 1" :disabled="currentPage === 1"
+                            class="px-3 py-1 border rounded-md" title="首页">首页</button>
+
                         <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
                             class="px-3 py-1 border rounded-md" title="上一页">上一页</button>
 
@@ -381,6 +384,9 @@ onMounted(async () => {
 
                         <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
                             class="px-3 py-1 border rounded-md" title="下一页">下一页</button>
+
+                        <button @click="currentPage = totalPages" :disabled="currentPage === totalPages"
+                            class="px-3 py-1 border rounded-md" title="尾页">尾页</button>
                     </div>
                 </div>
                 <div v-else-if="!projectStore.loading && projectStore.projects.length > 0"
