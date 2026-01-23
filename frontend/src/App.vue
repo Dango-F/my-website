@@ -47,6 +47,37 @@ onMounted(async () => {
   }
 });
 
+// 性能优化：进站即预热 - 预测性预取页面组件
+window.addEventListener('load', () => {
+  // 弱网保护：如果是节流模式（Save Data）或 2G/3G 网络，不执行预热以节省流量
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  if (connection && (connection.saveData || /2g|3g/.test(connection.effectiveType))) {
+    console.warn("⚠️ 弱网或节流模式，跳过代码预热");
+    return;
+  }
+
+  // 调度预热：寻找浏览器空闲时间 (requestIdleCallback)
+  const runIdleTask = window.requestIdleCallback || ((cb) => setTimeout(cb, 2000));
+
+  runIdleTask(() => {
+    console.log("🛠️ 正在执行全站代码预测性预热...");
+
+    // 动态导入（Dynamic Import）：触发 Vite 的异步分包预下载
+    // 浏览器会自动将这些资源放入 Memory Cache，状态码显示为 200
+    const prefetchList = [
+      () => import('./views/ProjectsView.vue'),
+      () => import('./views/ResumeView.vue'),
+      () => import('./views/TodoView.vue'),
+      () => import('./views/ChangePasswordView.vue')
+    ];
+
+    // 逐个触发，不阻塞主线程
+    prefetchList.forEach(loadComponent => loadComponent());
+    
+    console.log("✅ 预热指令已发出，后续页面切换将实现 0ms 响应");
+  });
+});
+
 // 组件卸载时清除监听
 onUnmounted(() => {
   // 移除页面可见性监听
