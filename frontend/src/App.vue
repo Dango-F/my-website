@@ -77,6 +77,8 @@ window.addEventListener('load', () => {
     // 2. 数据预热：静默预取所有核心数据到 localStorage
     try {
       console.log("🚀 开始全量数据预热...");
+      // 标记全局数据预热开始，通知页面显示加载状态
+      try { window.__DATA_PREHEATING = true; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: true } })); } catch (e) { /* noop */ }
       
       // 第一步：优先加载配置数据，确保 githubToken 可用
       console.log("📋 第一步：加载配置数据...");
@@ -136,6 +138,8 @@ window.addEventListener('load', () => {
       console.warn("⚠️ 数据预热失败（不影响正常使用）:", error.message);
     }
     
+    // 预热完成，清理全局标记并通知页面
+    try { window.__DATA_PREHEATING = false; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: false } })); } catch (e) { /* noop */ }
     console.log("✅ 预热指令已发出，后续页面切换将实现 0ms 响应");
   });
 });

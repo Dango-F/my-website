@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { allowRequest } from '@/utils/requestThrottle'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
@@ -29,6 +29,19 @@ const sidebarStore = useSidebarStore()
 const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const isLoadingToken = ref(false)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+// 页面预热标记：由 App.vue 派发的 custom event 控制
+const preheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
+let __preheatListener = null
+onMounted(() => {
+    if (typeof window !== 'undefined' && window.addEventListener) {
+        __preheatListener = (ev) => { try { preheating.value = !!ev.detail?.active } catch (e) { preheating.value = false } }
+        window.addEventListener('data:preheating', __preheatListener)
+    }
+})
+onUnmounted(() => {
+    try { if (__preheatListener && typeof window !== 'undefined' && window.removeEventListener) window.removeEventListener('data:preheating', __preheatListener) } catch (e) { }
+})
 
 // 计算最后更新时间的友好显示
 const lastUpdateTime = computed(() => {
@@ -323,14 +336,14 @@ onMounted(async () => {
                     {{ projectStore.error }}
                 </p>
 
-                <!-- 加载状态 -->
-                <div v-if="projectStore.loading" class="flex justify-center my-10">
+                <!-- 加载状态（包括预热期间显示） -->
+                <div v-if="projectStore.loading || preheating" class="flex justify-center my-10">
                     <div class="animate-spin h-8 w-8 border-4 border-github-blue border-t-transparent rounded-full">
                     </div>
                 </div>
 
                 <!-- 提示用户加载数据 -->
-                <div v-else-if="projectStore.projects.length === 0 && !projectStore.lastFetchTime"
+                <div v-else-if="!preheating && projectStore.projects.length === 0 && !projectStore.lastFetchTime"
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
