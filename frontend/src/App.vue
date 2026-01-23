@@ -68,10 +68,11 @@ window.addEventListener('load', () => {
 
     // 1. 代码预热：动态导入页面组件
     const prefetchList = [
+      () => import('./views/HomeView.vue'),
       () => import('./views/ProjectsView.vue'),
       () => import('./views/ResumeView.vue'),
-      () => import('./views/ResumeView.vue'),
       () => import('./views/TodoView.vue'),
+      () => import('./views/LoginView.vue'),
       () => import('./views/ChangePasswordView.vue')
     ];
 
@@ -80,20 +81,33 @@ window.addEventListener('load', () => {
 
     // 2. 数据预热：静默预取核心数据到 localStorage
     try {
-      // 检查是否需要预取项目数据（如果用户已登录且配置了 GitHub Token）
-      if (authStore.token && configStore.githubToken && profileStore.profile?.github_username) {
-        // 先确保 config 已加载
-        await configStore.checkVersionAndUpdate();
+      console.log("🔍 检查项目数据状态...");
+      console.log("  - projects.length:", projectStore.projects.length);
+      console.log("  - shouldRefresh():", projectStore.shouldRefresh ? projectStore.shouldRefresh() : 'method not found');
+      
+      // 检查项目数据是否需要刷新（移除登录和配置检查，直接预热）
+      if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
+        console.log("🚚 正在后台预取项目数据...");
         
-        // 检查项目数据是否需要刷新
-        if (projectStore.projects.length === 0 || projectStore.shouldRefresh()) {
-          console.log("🚚 正在后台预取项目数据...");
+        // 尝试从 config store 获取 GitHub Token，如果没有则尝试无 token 请求
+        let githubToken = configStore.githubToken;
+        let githubUsername = profileStore.profile?.github_username;
+        
+        // 如果没有配置信息，尝试使用默认值或跳过
+        if (!githubUsername) {
+          console.log("⚠️ 未找到 GitHub 用户名，尝试使用默认配置...");
+          githubUsername = 'Dango-F'; // 使用默认用户名
+        }
+        
+        if (githubUsername) {
           // 静默预取项目数据，用户完全无感知
-          await projectStore.fetchGitHubRepos(profileStore.profile.github_username, configStore.githubToken);
+          await projectStore.fetchGitHubRepos(githubUsername, githubToken);
           console.log("✅ 核心数据已提前进入缓存");
         } else {
-          console.log("📦 项目数据缓存有效，跳过预取");
+          console.log("⚠️ 无法获取 GitHub 用户名，跳过数据预热");
         }
+      } else {
+        console.log("📦 项目数据缓存有效，跳过预取");
       }
     } catch (error) {
       // 静默失败，不影响首页体验
