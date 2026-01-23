@@ -98,7 +98,7 @@ window.addEventListener('load', () => {
       let projectPreheatPromise = null;
       if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
         console.log("🚚 正在后台预取项目数据...");
-        projectPreheatPromise = projectStore.fetchGitHubRepos(githubUsername, githubToken).then(() => {
+        projectPreheatPromise = projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true }).then(() => {
           console.log("✅ 项目数据预热成功");
         }).catch(err => {
           console.warn("⚠️ 项目数据预热失败:", err.message);

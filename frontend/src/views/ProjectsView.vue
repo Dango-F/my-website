@@ -93,12 +93,22 @@ const saveGitHubTokenToServer = async (token) => {
     }
 };
 
-// 修改加载GitHub仓库函数
+// 修改加载GitHub仓库函数（使用共享请求单例）
 const loadGitHubRepos = async () => {
     if (!allowRequest('projects-refresh')) return;
-    if (githubUsername.value && githubToken.value) {
-        // 调用API时传入令牌
-        await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value);
+    if (githubUsername.value) {
+        // 使用共享请求模式：如果预热正在进行，会自动等待；否则正常加载
+        await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value, { useSharedPromise: true });
+    }
+};
+
+// 强制刷新函数（赋予最高优先级，无视并发保护）
+const forceRefreshGitHubRepos = async () => {
+    if (githubUsername.value) {
+        console.log("🔄 手动强制刷新项目数据...");
+        // 使用强制刷新模式，会中断当前请求并重新开始
+        await projectStore.forceRefreshGitHubRepos(githubUsername.value, githubToken.value);
+        console.log("✅ 强制刷新完成");
     }
 };
 
@@ -234,7 +244,7 @@ onMounted(async () => {
                             </svg>
                         </div>
 
-                        <button @click="loadGitHubRepos"
+                        <button @click="forceRefreshGitHubRepos"
                             class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
                             :disabled="projectStore.loading">
                             <span v-if="projectStore.loading">获取中...</span>

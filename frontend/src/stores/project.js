@@ -59,6 +59,9 @@ export const useProjectStore = defineStore('project', () => {
     // 并发保护：避免重复并发请求
     let pendingFetch = null
 
+    // 共享请求单例：用于 App.vue 预热和组件加载的数据共享
+    let sharedDataPromise = null
+
     // 跨窗口/组件同步：响应 localStorage 变化或自定义事件
     if (typeof window !== 'undefined') {
         // 当其他标签页改变 localStorage 时，同步到当前 store
@@ -90,13 +93,26 @@ export const useProjectStore = defineStore('project', () => {
     }
 
     // 从GitHub API获取仓库
-    const fetchGitHubRepos = async (username, token = '') => {
+    const fetchGitHubRepos = async (username, token = '', options = {}) => {
+        const { forceRefresh = false, useSharedPromise = false } = options
+        
         if (!username) return
 
-        // 如果已有未完成的请求，复用之（并发保护）
-        if (pendingFetch) return pendingFetch
+        // 共享请求单例模式：如果有共享 Promise 且未强制刷新，复用它
+        if (useSharedPromise && sharedDataPromise && !forceRefresh) {
+            console.log("🔄 使用共享请求单例，等待预热完成...");
+            return sharedDataPromise
+        }
+
+        // 如果已有未完成的请求且未强制刷新，复用之（并发保护）
+        if (pendingFetch && !forceRefresh) return pendingFetch
 
         pendingFetch = (async () => {
+            // 如果使用共享模式，设置共享 Promise
+            if (useSharedPromise) {
+                sharedDataPromise = pendingFetch
+            }
+            
             loading.value = true
             error.value = null
 
@@ -192,6 +208,10 @@ export const useProjectStore = defineStore('project', () => {
         } finally {
             loading.value = false
             pendingFetch = null
+            // 清理共享 Promise
+            if (useSharedPromise) {
+                sharedDataPromise = null
+            }
         }
         })()
 
@@ -218,6 +238,17 @@ export const useProjectStore = defineStore('project', () => {
         );
     }
 
+    // 强制刷新：中断当前请求并重新获取（用于手动刷新按钮）
+    const forceRefreshGitHubRepos = async (username, token = '') => {
+        console.log("🔄 强制刷新：中断当前请求...")
+        
+        // 清理共享状态，允许新请求
+        sharedDataPromise = null
+        
+        // 使用强制刷新选项调用
+        return fetchGitHubRepos(username, token, { forceRefresh: true })
+    }
+
     return {
         projects,
         tags,
@@ -228,6 +259,7 @@ export const useProjectStore = defineStore('project', () => {
         getProjectsByTag,
         getProjectsByLanguage,
         fetchGitHubRepos,
+        forceRefreshGitHubRepos,
         clearCachedProjects,
         shouldRefresh
     }
