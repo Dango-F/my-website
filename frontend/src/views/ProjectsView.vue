@@ -1,7 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, onUnmounted, watch } from 'vue'
 import { allowRequest } from '@/utils/requestThrottle'
-import { allowRequest } from '@/utils/requestThrottle'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useProfileStore } from '@/stores/profile'
