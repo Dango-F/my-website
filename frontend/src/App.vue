@@ -8,12 +8,14 @@ import { useProfileStore } from "@/stores/profile";
 import { useAuthStore } from "@/stores/auth";
 import { useProjectStore } from "@/stores/project";
 import { useConfigStore } from "@/stores/config";
+import { useTodoStore } from "@/stores/todo";
 
 const router = useRouter();
 const profileStore = useProfileStore();
 const authStore = useAuthStore();
 const projectStore = useProjectStore();
 const configStore = useConfigStore();
+const todoStore = useTodoStore();
 
 // 页面可见性变化处理（防止休眠导致定时器延迟）
 const handleVisibilityChange = () => {
@@ -79,36 +81,65 @@ window.addEventListener('load', () => {
     // 逐个触发，不阻塞主线程
     prefetchList.forEach(loadComponent => loadComponent());
 
-    // 2. 数据预热：静默预取核心数据到 localStorage
+    // 2. 数据预热：静默预取所有核心数据到 localStorage
     try {
-      console.log("🔍 检查项目数据状态...");
-      console.log("  - projects.length:", projectStore.projects.length);
-      console.log("  - shouldRefresh():", projectStore.shouldRefresh ? projectStore.shouldRefresh() : 'method not found');
+      console.log("🚀 开始全量数据预热...");
       
-      // 检查项目数据是否需要刷新（移除登录和配置检查，直接预热）
+      // 第一步：优先加载配置数据，确保 githubToken 可用
+      console.log("📋 第一步：加载配置数据...");
+      try {
+        await configStore.checkVersionAndUpdate();
+        console.log("✅ 配置数据加载完成");
+      } catch (err) {
+        console.warn("⚠️ 配置数据加载失败:", err.message);
+      }
+      
+      // 第二步：并行预取其他数据
+      console.log("📦 第二步：并行预取其他数据...");
+      const preheatTasks = [];
+      
+      // 预取 Profile 数据
+      preheatTasks.push(
+        profileStore.fetchProfile().catch(err => {
+          console.warn("⚠️ Profile 预热失败:", err.message);
+        })
+      );
+      
+      // 预取 Todos 数据
+      preheatTasks.push(
+        todoStore.fetchTodos().catch(err => {
+          console.warn("⚠️ Todos 预热失败:", err.message);
+        })
+      );
+      
+      // 等待 Profile 和 Todos 加载完成
+      await Promise.allSettled(preheatTasks);
+      
+      // 第三步：使用已加载的 githubToken 预取项目数据
+      const githubUsername = profileStore.profile?.github_username || 'Dango-F';
+      const githubToken = configStore.githubToken;
+      
+      console.log("🔑 GitHub Token 状态:", githubToken ? "✅ 已配置" : "❌ 未配置");
+      console.log("👤 GitHub 用户名:", githubUsername);
+      
       if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
         console.log("🚚 正在后台预取项目数据...");
-        
-        // 尝试从 config store 获取 GitHub Token，如果没有则尝试无 token 请求
-        let githubToken = configStore.githubToken;
-        let githubUsername = profileStore.profile?.github_username;
-        
-        // 如果没有配置信息，尝试使用默认值或跳过
-        if (!githubUsername) {
-          console.log("⚠️ 未找到 GitHub 用户名，尝试使用默认配置...");
-          githubUsername = 'Dango-F'; // 使用默认用户名
-        }
-        
-        if (githubUsername) {
-          // 静默预取项目数据，用户完全无感知
+        try {
           await projectStore.fetchGitHubRepos(githubUsername, githubToken);
-          console.log("✅ 核心数据已提前进入缓存");
-        } else {
-          console.log("⚠️ 无法获取 GitHub 用户名，跳过数据预热");
+          console.log("✅ 项目数据预热成功");
+        } catch (err) {
+          console.warn("⚠️ 项目数据预热失败:", err.message);
+          if (githubToken) {
+            console.warn("💡 Token 可能已过期，建议检查 GitHub Token 配置");
+          } else {
+            console.warn("💡 未配置 GitHub Token，使用公开 API（有速率限制）");
+          }
         }
       } else {
         console.log("📦 项目数据缓存有效，跳过预取");
       }
+      
+      console.log("✅ 全量数据预热完成，所有数据已缓存到 localStorage");
     } catch (error) {
       // 静默失败，不影响首页体验
       console.warn("⚠️ 数据预热失败（不影响正常使用）:", error.message);
