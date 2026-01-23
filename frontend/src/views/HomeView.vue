@@ -6,6 +6,7 @@ import { storeToRefs } from "pinia";
 import HomeSidebar from "@/components/HomeSidebar.vue";
 import RepoCard from "@/components/RepoCard.vue";
 import { onMounted, computed, ref } from "vue";
+import { allowRequest } from '@/utils/requestThrottle'
 import { useTodoStore } from "@/stores/todo";
 import { useSidebarStore } from "@/stores/sidebar";
 import axios from "axios";
@@ -70,13 +71,18 @@ const loadProjects = async () => {
 // 修改刷新数据函数
 const refreshData = async () => {
   if (isRefreshing.value) return;
+  if (!allowRequest('home-refresh')) {
+    refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
+    setTimeout(() => { refreshMessage.value.show = false }, 1000);
+    return;
+  }
   isRefreshing.value = true;
 
   try {
     // 强刷新：项目 + profile + todos 均直接从后端拉取（跳过 localStorage 优先逻辑）
     const hasProfileLocal = !!localStorage.getItem('profile_data')
     const hasTodosLocal = !!localStorage.getItem('todos')
-    console.log('[手动刷新] 强刷新触发：local profile exists=', hasProfileLocal, ', local todos exists=', hasTodosLocal)
+    // console.log('[手动刷新] 强刷新触发：local profile exists=', hasProfileLocal, ', local todos exists=', hasTodosLocal)
     const jobs = [loadProjects()]
     if (profileStore.fetchProfile) jobs.push(profileStore.fetchProfile())
     if (todoStore.fetchTodos) jobs.push(todoStore.fetchTodos())

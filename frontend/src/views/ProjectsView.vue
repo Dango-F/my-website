@@ -1,5 +1,6 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
+import { allowRequest } from '@/utils/requestThrottle'
 import { storeToRefs } from 'pinia'
 import { useProjectStore } from '@/stores/project'
 import { useProfileStore } from '@/stores/profile'
@@ -94,6 +95,7 @@ const saveGitHubTokenToServer = async (token) => {
 
 // 修改加载GitHub仓库函数
 const loadGitHubRepos = async () => {
+    if (!allowRequest('projects-refresh')) return;
     if (githubUsername.value && githubToken.value) {
         // 调用API时传入令牌
         await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value);
@@ -158,6 +160,25 @@ const filteredProjects = computed(() => {
     // 按星标降序排序
     return result.slice().sort((a, b) => b.stars - a.stars)
 })
+// 分页：每页项目数
+const itemsPerPage = 3
+const currentPage = ref(1)
+
+const totalPages = computed(() => {
+    return Math.max(1, Math.ceil(filteredProjects.value.length / itemsPerPage))
+})
+
+const paginatedProjects = computed(() => {
+    const start = (currentPage.value - 1) * itemsPerPage
+    return filteredProjects.value.slice(start, start + itemsPerPage)
+})
+
+// 当过滤条件或数据变化时，确保页码有效并重置到第一页
+watch([filteredProjects], () => {
+    if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
+    // 如果当前不在第一页且过滤条件改变，回到第一页更符合用户预期
+    if (currentPage.value !== 1) currentPage.value = 1
+})
 
 // 监听 profile.github_username 的变化,同步到本地 githubUsername
 watch(() => profile.value.github_username, (newUsername) => {
@@ -192,6 +213,7 @@ onMounted(async () => {
                         <input v-model="githubUsername" type="text" placeholder="GitHub用户名"
                             class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
 
+                        <!-- 钥匙图标：所有用户可见；已登录用户可点击编辑/更新令牌 -->
                         <button v-if="authStore.isAuthenticated" @click="toggleTokenInput" type="button"
                             class="px-2 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] hover:bg-gray-200 dark:hover:bg-gray-800"
                             :title="hasConfiguredToken ? 'GitHub访问令牌已配置（点击修改）' : 'GitHub访问令牌（未配置）'">
@@ -201,6 +223,16 @@ onMounted(async () => {
                                     d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
                             </svg>
                         </button>
+
+                        <!-- 未登录用户：显示静态状态图标（绿色表示已由管理员配置），不可交互 -->
+                        <div v-else class="px-2 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+                            :title="hasConfiguredToken ? '管理员已配置 GitHub 访问令牌' : 'GitHub 访问令牌未配置'">
+                            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
+                                stroke="currentColor" :class="{ 'text-green-500': hasConfiguredToken }">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" />
+                            </svg>
+                        </div>
 
                         <button @click="loadGitHubRepos"
                             class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
@@ -333,7 +365,23 @@ onMounted(async () => {
 
                 <!-- 项目列表 -->
                 <div v-if="!projectStore.loading && filteredProjects.length" class="space-y-4">
-                    <RepoCard v-for="project in filteredProjects" :key="project.id" :project="project" />
+                    <RepoCard v-for="project in paginatedProjects" :key="project.id" :project="project" />
+
+                    <!-- 分页器 -->
+                    <div class="flex items-center justify-center gap-2 mt-4">
+                        <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
+                            class="px-3 py-1 border rounded-md" title="上一页">上一页</button>
+
+                        <div class="flex items-center gap-1">
+                            <button v-for="p in totalPages" :key="p" @click="currentPage = p"
+                                :class="['px-2 py-1 rounded-md', currentPage === p ? 'bg-github-blue text-white' : 'border']">
+                                {{ p }}
+                            </button>
+                        </div>
+
+                        <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
+                            class="px-3 py-1 border rounded-md" title="下一页">下一页</button>
+                    </div>
                 </div>
                 <div v-else-if="!projectStore.loading && projectStore.projects.length > 0"
                     class="text-center py-10 text-github-gray">

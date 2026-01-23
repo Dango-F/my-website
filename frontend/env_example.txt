@@ -1,0 +1,2 @@
+VITE_API_URL=your_backend_port
+VITE_API_URL=http://localhost:3000/api

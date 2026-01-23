@@ -7,6 +7,7 @@ import Timeline from '@/components/Timeline.vue'
 import TimelineEditor from '@/components/TimelineEditor.vue'
 import { useSidebarStore } from '@/stores/sidebar'
 import { computed, ref } from 'vue'
+import { allowRequest } from '@/utils/requestThrottle'
 
 const profileStore = useProfileStore()
 const authStore = useAuthStore()
@@ -17,6 +18,12 @@ const isCollapsed = computed(() => sidebarStore.isCollapsed)
 
 const showTimelineEditor = ref(false)
 const dragIndex = ref(null)
+
+const refreshProfile = async () => {
+    if (!allowRequest('profile-refresh')) return;
+    if (profileStore.isLoading) return
+    await profileStore.fetchProfile()
+}
 
 function showContactInfo(type, value) {
     window.alert(`${type}: ${value}`);
@@ -78,7 +85,16 @@ const onDragEnd = () => {
 
             <!-- 主内容区 -->
             <div>
-                <h1 class="text-2xl font-bold mb-6">个人简历</h1>
+                <div class="flex justify-between items-center mb-6">
+                    <h1 class="text-2xl font-bold">个人简历</h1>
+                    <button @click="refreshProfile" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center" :disabled="profileStore.isLoading">
+                        <svg v-if="profileStore.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                        <span v-else>刷新</span>
+                    </button>
+                </div>
 
                 <!-- 个人信息概述 -->
                 <section class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md p-6 mb-6">

@@ -9,6 +9,9 @@ router.get("/", todoController.getAllTodos);
 // 创建新的待办事项
 router.post("/", protect, todoController.createTodo);
 
+// 批量删除所有已完成的待办事项（必须在 /:id 之前）
+router.delete("/completed", protect, todoController.deleteCompletedTodos);
+
 // 更新待办事项
 router.put("/:id", protect, todoController.updateTodo);
 

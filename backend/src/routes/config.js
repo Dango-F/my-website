@@ -4,7 +4,7 @@ const {
     updateGithubToken,
     deleteGithubToken
 } = require("../controllers/configController");
-const { protect } = require("../middlewares/auth");
+const { protect, authorize } = require("../middlewares/auth");
 
 const router = express.Router();
 
@@ -12,10 +12,11 @@ const router = express.Router();
 router.get("/", getUserConfig);
 
 // 更新GitHub Token
-router.post("/github-token", protect, updateGithubToken);
+// 只有管理员可以更新或删除站点级 GitHub Token，普通用户只能读取
+router.post("/github-token", protect, authorize('admin'), updateGithubToken);
 
 // 删除GitHub Token
-router.delete("/github-token", protect, deleteGithubToken);
+router.delete("/github-token", protect, authorize('admin'), deleteGithubToken);
 
 module.exports = router;
  

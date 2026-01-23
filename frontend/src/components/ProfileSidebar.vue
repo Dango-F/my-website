@@ -264,7 +264,7 @@ const onDragEnd = () => {
               v-for="(skill, index) in profile.skills"
               :key="skill"
               class="px-2 py-1 text-xs rounded-full bg-blue-100 text-github-blue dark:bg-blue-900 dark:text-blue-300 transition-colors select-none"
-              :class="[dragIndex === index ? 'opacity-60' : '', authStore.isAuthenticated ? 'hover:bg-blue-200 dark:hover:bg-blue-800 cursor-move' : '']"
+              :class="[dragIndex === index ? 'opacity-60' : '', authStore.isAuthenticated ? 'hover:bg-blue-200 dark:hover:bg-blue-800 cursor-pointer' : 'cursor-pointer']"
               :draggable="authStore.isAuthenticated"
               @dragstart="authStore.isAuthenticated ? onDragStart($event, index) : null"
               @dragover.prevent

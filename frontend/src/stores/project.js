@@ -54,18 +54,55 @@ export const useProjectStore = defineStore('project', () => {
     // 是否加载出错
     const error = ref(null)
     // 最后一次API调用的时间戳
-    const lastFetchTime = ref(localStorage.getItem('github_last_fetch') || 0)
+    const lastFetchTime = ref(parseInt(localStorage.getItem('github_last_fetch') || '0'))
+
+    // 并发保护：避免重复并发请求
+    let pendingFetch = null
+
+    // 跨窗口/组件同步：响应 localStorage 变化或自定义事件
+    if (typeof window !== 'undefined') {
+        // 当其他标签页改变 localStorage 时，同步到当前 store
+        window.addEventListener('storage', (e) => {
+            try {
+                if (e.key === 'github_projects') {
+                    const v = e.newValue
+                    if (v) projects.value = JSON.parse(v)
+                    else projects.value = []
+                }
+                if (e.key === 'github_last_fetch') {
+                    lastFetchTime.value = parseInt(e.newValue || '0')
+                }
+            } catch (err) {
+                console.error('storage event 处理失败:', err)
+            }
+        })
+
+        // 自定义事件：在同一页面的不同组件间广播更新（fetch 完成后触发）
+        window.addEventListener('projects:updated', (ev) => {
+            try {
+                const d = ev.detail || {}
+                if (d.projects) projects.value = d.projects
+                if (d.lastFetch) lastFetchTime.value = d.lastFetch
+            } catch (err) {
+                console.error('projects:updated 处理失败:', err)
+            }
+        })
+    }
 
     // 从GitHub API获取仓库
     const fetchGitHubRepos = async (username, token = '') => {
         if (!username) return
 
-        loading.value = true
-        error.value = null
+        // 如果已有未完成的请求，复用之（并发保护）
+        if (pendingFetch) return pendingFetch
 
-        try {
+        pendingFetch = (async () => {
+            loading.value = true
+            error.value = null
+
+            try {
             // 构建API请求URL
-            const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&per_page=10`
+            const apiUrl = `https://api.github.com/users/${username}/repos?sort=updated&per_page=50`
 
             // 准备请求头
             const headers = {
@@ -126,8 +163,26 @@ export const useProjectStore = defineStore('project', () => {
             projects.value = [...githubProjects]
 
             // 更新最后一次API调用的时间戳
-            lastFetchTime.value = Date.now()
-            localStorage.setItem('github_last_fetch', lastFetchTime.value)
+            const now = Date.now()
+            lastFetchTime.value = now
+            try {
+                // 立即更新 localStorage，保证其他页面能读取到最新缓存
+                localStorage.setItem('github_projects', JSON.stringify(projects.value))
+                localStorage.setItem('github_last_fetch', String(now))
+            } catch (e) {
+                console.error('写入 localStorage 失败:', e)
+            }
+
+            // 广播更新，通知同一页面内其他组件（storage 事件只在跨窗口触发）
+            try {
+                if (typeof window !== 'undefined' && window.dispatchEvent) {
+                    window.dispatchEvent(new CustomEvent('projects:updated', {
+                        detail: { projects: projects.value, lastFetch: now }
+                    }))
+                }
+            } catch (e) {
+                console.error('广播 projects:updated 失败:', e)
+            }
 
             return githubProjects
         } catch (err) {
@@ -136,7 +191,11 @@ export const useProjectStore = defineStore('project', () => {
             return []
         } finally {
             loading.value = false
+            pendingFetch = null
         }
+        })()
+
+        return pendingFetch
     }
 
     // 清除本地缓存的项目

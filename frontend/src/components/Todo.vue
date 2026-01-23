@@ -2,6 +2,7 @@
 import { ref, computed } from "vue";
 import { useTodoStore } from "@/stores/todo";
 import { useAuthStore } from "@/stores/auth";
+import { allowRequest } from '@/utils/requestThrottle'
 
 const todoStore = useTodoStore();
 const authStore = useAuthStore();
@@ -29,8 +30,36 @@ const filteredTodos = computed(() => {
 
   return result;
 });
+// 让未完成项在前，完成项在后；同组内按优先级从高到低排序，优先级相同则按更新时间降序
+const priorityValue = (p) => {
+  if (!p) return 0
+  if (p === 'high') return 3
+  if (p === 'medium') return 2
+  if (p === 'low') return 1
+  return 0
+}
+
+const sortedFilteredTodos = computed(() => {
+  return filteredTodos.value.slice().sort((a, b) => {
+    // 未完成优先于已完成
+    if ((a.completed || false) !== (b.completed || false)) {
+      return (a.completed || false) ? 1 : -1
+    }
+
+    // 同完成状态下按优先级排序（high > medium > low）
+    const pa = priorityValue(a.priority)
+    const pb = priorityValue(b.priority)
+    if (pa !== pb) return pb - pa
+
+    // 最后按更新时间降序（较新靠前），没有则比较创建时间或 id
+    const ta = a.updatedAt ? new Date(a.updatedAt).getTime() : (a.createdAt ? new Date(a.createdAt).getTime() : (a._id || a.id || 0))
+    const tb = b.updatedAt ? new Date(b.updatedAt).getTime() : (b.createdAt ? new Date(b.createdAt).getTime() : (b._id || b.id || 0))
+    return tb - ta
+  })
+})
 
 const addTodo = () => {
+  if (!canEdit.value) return
   if (newTodo.value.trim() && newCategory.value && newPriority.value) {
     todoStore.addTodo({
       text: newTodo.value.trim(),
@@ -42,6 +71,36 @@ const addTodo = () => {
     newPriority.value = "";
   }
 };
+
+const deleteAllCompleted = async () => {
+  if (!canEdit.value) return
+  const ok = window.confirm('确认删除所有已完成的待办事项吗？此操作不可撤销。')
+  if (!ok) return
+  try {
+    await todoStore.deleteCompletedTodos()
+  } catch (e) {
+    // error 已在 store 中设置，额外处理可在此添加
+  }
+}
+
+// 权限判断：只有特定角色可以修改（例如管理员）
+const canEdit = computed(() => {
+  return (
+    authStore.isAuthenticated &&
+    authStore.user &&
+    authStore.user.role === 'admin'
+  )
+})
+
+const toggleTodoWrapped = (todoId) => {
+  if (!canEdit.value) return
+  todoStore.toggleTodo(todoId)
+}
+
+const removeTodoWrapped = (todoId) => {
+  if (!canEdit.value) return
+  todoStore.removeTodo(todoId)
+}
 
 const getPriorityClass = (priority) => {
   switch (priority) {
@@ -58,6 +117,8 @@ const getPriorityClass = (priority) => {
 
 // 刷新待办事项列表，只在用户点击刷新按钮时触发动画
 const refreshTodos = async () => {
+  if (isRefreshing.value) return;
+  if (!allowRequest('todo-refresh')) return;
   isRefreshing.value = true;
   await todoStore.fetchTodos();
   setTimeout(() => {
@@ -103,9 +164,9 @@ const refreshTodos = async () => {
     </div>
 
     <!-- 添加新待办 -->
-    <div v-if="authStore.isAuthenticated" class="mb-6 border-b border-[var(--color-border)] pb-4">
+    <div v-if="canEdit" class="mb-6 border-b border-[var(--color-border)] pb-4">
       <div class="flex flex-col gap-2">
-        <input
+          <input
           v-model="newTodo"
           @keyup.enter="addTodo"
           type="text"
@@ -141,6 +202,14 @@ const refreshTodos = async () => {
             :disabled="todoStore.isLoading"
           >
             {{ todoStore.isLoading ? "添加中..." : "添加" }}
+          </button>
+          <button
+            @click="deleteAllCompleted"
+            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            :disabled="todoStore.isLoading"
+            title="一键删除所有已完成代办（仅管理员可用）"
+          >
+            删除已完成
           </button>
         </div>
       </div>
@@ -214,17 +283,20 @@ const refreshTodos = async () => {
 
     <!-- Todo列表 -->
     <div v-else-if="filteredTodos.length">
-      <div
-        v-for="todo in filteredTodos"
-        :key="todo._id || todo.id"
-        class="p-3 mb-2 border border-[var(--color-border)] rounded-md flex items-center justify-between"
-        :class="{ 'bg-gray-50 dark:bg-gray-800': todo.completed }"
-      >
+      <transition-group name="todo-list" tag="div" class="space-y-2">
+        <div
+          v-for="todo in sortedFilteredTodos"
+          :key="todo._id || todo.id"
+          class="p-3 mb-2 border border-[var(--color-border)] rounded-md flex items-center justify-between"
+          :class="{ 'bg-gray-50 dark:bg-gray-800': todo.completed }"
+        >
         <div class="flex items-center gap-2">
           <input
             type="checkbox"
             :checked="todo.completed"
-            @change="todoStore.toggleTodo(todo._id || todo.id)"
+            @change="toggleTodoWrapped(todo._id || todo.id)"
+            :disabled="!canEdit"
+            :title="canEdit ? '' : '只读模式：无权限修改'"
             class="h-4 w-4"
           />
           <span :class="{ 'line-through text-github-gray': todo.completed }">
@@ -243,8 +315,8 @@ const refreshTodos = async () => {
           </span>
         </div>
         <button
-          v-if="authStore.isAuthenticated"
-          @click="todoStore.removeTodo(todo._id || todo.id)"
+          v-if="canEdit"
+          @click="removeTodoWrapped(todo._id || todo.id)"
           class="no-hover-effect text-red-500 hover:text-red-700"
         >
           <svg
@@ -262,7 +334,8 @@ const refreshTodos = async () => {
             />
           </svg>
         </button>
-      </div>
+        </div>
+      </transition-group>
     </div>
     <div v-else class="text-center py-4 text-github-gray">
       没有符合条件的待办事项
@@ -285,5 +358,25 @@ const refreshTodos = async () => {
   transform: none !important;
   transition: none !important;
   box-shadow: none !important;
+}
+
+/* 平滑移动动画：使用 FLIP 动画（Vue 的 transition-group move） */
+.todo-list-move {
+  transition: transform 320ms cubic-bezier(.2,.8,.2,1);
+}
+
+/* 入口/离开淡入淡出（可选，增强感知） */
+.todo-list-enter-from,
+.todo-list-leave-to {
+  opacity: 0.01;
+  transform: translateY(6px);
+}
+.todo-list-enter-active,
+.todo-list-leave-active {
+  transition: all 240ms cubic-bezier(.2,.8,.2,1);
+}
+
+.todo-list-move {
+  will-change: transform;
 }
 </style>

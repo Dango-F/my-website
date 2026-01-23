@@ -123,3 +123,23 @@ exports.deleteTodo = async (req, res) => {
         });
     }
 };
+
+// 批量删除所有已完成的待办事项
+exports.deleteCompletedTodos = async (req, res) => {
+    try {
+        // 如果实现了用户认证，可以限定为当前用户：{ user: req.user.id, completed: true }
+        const result = await Todo.deleteMany({ completed: true });
+
+        res.status(200).json({
+            success: true,
+            deletedCount: result.deletedCount || 0,
+            message: `已删除 ${result.deletedCount || 0} 条已完成的待办事项`
+        });
+    } catch (error) {
+        res.status(500).json({
+            success: false,
+            message: "批量删除已完成的待办事项失败",
+            error: error.message,
+        });
+    }
+};

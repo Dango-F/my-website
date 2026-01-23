@@ -28,7 +28,7 @@ export const useConfigStore = defineStore('config', {
           this.configData = JSON.parse(savedData)
           this.configVersion = savedVersion || ''
           this.lastVersionCheck = parseInt(savedLastCheck || '0')
-          console.log('✅ 已从本地加载 config')
+          // console.log('✅ 已从本地加载 config')
         }
       } catch (err) {
         console.error('从 localStorage 恢复 config 失败:', err)
@@ -79,7 +79,7 @@ export const useConfigStore = defineStore('config', {
 
       // 30 分钟内短路
       if (now - this.lastVersionCheck < this.VERSION_CHECK_INTERVAL) {
-        console.log('⏱️ config 版本检查未到期，跳过')
+        // console.log('⏱️ config 版本检查未到期，跳过')
         return
       }
 
@@ -88,10 +88,10 @@ export const useConfigStore = defineStore('config', {
         const serverVersion = response.data.data.config || '0'
 
         if (serverVersion !== this.configVersion) {
-          console.log('🔄 config 版本不同，重新获取')
+          // console.log('🔄 config 版本不同，重新获取')
           await this.fetchConfig()
         } else {
-          console.log('✓ config 版本一致')
+          // console.log('✓ config 版本一致')
           this.lastVersionCheck = now
           this.saveToLocal()
         }

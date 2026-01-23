@@ -45,6 +45,14 @@ export const useTodoStore = defineStore('todo', () => {
                 const ver = maxTs ? String(maxTs) : String(Date.now())
                 localStorage.setItem('todos_version', ver)
                 todosVersion.value = ver
+                // 广播更新，通知同一页面内其他组件
+                try {
+                    if (typeof window !== 'undefined' && window.dispatchEvent) {
+                        window.dispatchEvent(new CustomEvent('todos:updated', { detail: { todos: todos.value, version: ver } }))
+                    }
+                } catch (e) {
+                    console.error('广播 todos:updated 失败:', e)
+                }
             } catch (e) {
                 console.error('保存 todos 到 localStorage 失败:', e)
             }
@@ -158,6 +166,42 @@ export const useTodoStore = defineStore('todo', () => {
         }
     }
 
+    // 批量删除所有已完成的待办事项（一次性后台接口，不逐项请求）
+    const deleteCompletedTodos = async () => {
+        isLoading.value = true
+        error.value = null
+        try {
+            const resp = await todoService.deleteCompletedTodos()
+            // 服务器返回删除数量，前端同步移除已完成项
+            todos.value = todos.value.filter(t => !t.completed)
+            lastFetchTime.value = Date.now()
+
+            // 更新本地缓存与版本
+            try {
+                localStorage.setItem('todos', JSON.stringify(todos.value))
+                const ver = String(Date.now())
+                localStorage.setItem('todos_version', ver)
+                todosVersion.value = ver
+                // 广播更新
+                if (typeof window !== 'undefined' && window.dispatchEvent) {
+                    window.dispatchEvent(new CustomEvent('todos:updated', { detail: { todos: todos.value, version: ver } }))
+                }
+            } catch (e) {
+                console.error('更新本地 todos 缓存失败:', e)
+            }
+
+            return resp
+        } catch (err) {
+            console.error('批量删除已完成待办失败:', err)
+            // 尝试提取后端返回的错误信息用于展示
+            const serverMsg = err?.response?.data?.message || err?.message || '批量删除已完成待办失败'
+            error.value = serverMsg
+            throw err
+        } finally {
+            isLoading.value = false
+        }
+    }
+
     const updateTodo = async (id, updates) => {
         // 查找待办事项（可能是本地或API获取的）
         const todo = todos.value.find(todo => todo._id === id || todo.id === id);
@@ -211,7 +255,7 @@ export const useTodoStore = defineStore('todo', () => {
             const stored = localStorage.getItem('todos')
             if (stored) {
                 todos.value = JSON.parse(stored)
-                console.log('[缓存] todos：已从 localStorage 恢复用于渲染，todos_version=', localStorage.getItem('todos_version'))
+                // console.log('[缓存] todos：已从 localStorage 恢复用于渲染，todos_version=', localStorage.getItem('todos_version'))
             }
         } catch (e) {
             console.error('解析本地 todos 失败:', e)
@@ -225,7 +269,7 @@ export const useTodoStore = defineStore('todo', () => {
             const debounceMs = 30 * 60 * 1000 // 30 分钟
             if (lastVersionCheck.value && now - Number(lastVersionCheck.value) < debounceMs) {
                 const hasLocal = !!localStorage.getItem('todos')
-                console.log('[缓存] todos：30分钟内已检查，跳过版本校验，使用 localStorage=', hasLocal)
+                // console.log('[缓存] todos：30分钟内已检查，跳过版本校验，使用 localStorage=', hasLocal)
                 return
             }
             // 标记为已检查（防止短时间重复触发）
@@ -242,10 +286,10 @@ export const useTodoStore = defineStore('todo', () => {
             if (resp.data && resp.data.success) {
                 const serverTodosVer = resp.data.data.todos
                 if (!todosVersion.value || String(todosVersion.value) !== String(serverTodosVer)) {
-                    console.log('[缓存] todos：版本不一致，准备从服务器拉取最新数据 (local exists=', hasLocal, ')')
+                    // console.log('[缓存] todos：版本不一致，准备从服务器拉取最新数据 (local exists=', hasLocal, ')')
                     await fetchTodos()
                 } else {
-                    console.log('[缓存] todos：版本一致，使用 localStorage 渲染')
+                    // console.log('[缓存] todos：版本一致，使用 localStorage 渲染')
                 }
             }
         } catch (e) {
@@ -260,6 +304,34 @@ export const useTodoStore = defineStore('todo', () => {
         setTimeout(() => {
             checkVersionAndUpdate()
         }, 0)
+    }
+
+    // 跨窗口/组件同步：监听 localStorage 的变更以及自定义事件
+    if (typeof window !== 'undefined') {
+        window.addEventListener('storage', (e) => {
+            try {
+                if (e.key === 'todos') {
+                    const v = e.newValue
+                    if (v) todos.value = JSON.parse(v)
+                    else todos.value = []
+                }
+                if (e.key === 'todos_version') {
+                    todosVersion.value = e.newValue
+                }
+            } catch (err) {
+                console.error('storage event 处理 todos 失败:', err)
+            }
+        })
+
+        window.addEventListener('todos:updated', (ev) => {
+            try {
+                const d = ev.detail || {}
+                if (d.todos) todos.value = d.todos
+                if (d.version) todosVersion.value = d.version
+            } catch (err) {
+                console.error('todos:updated 处理失败:', err)
+            }
+        })
     }
 
     // 将上次版本检查标记为当前时间（用于手动强刷后重置防抖）
@@ -297,5 +369,6 @@ export const useTodoStore = defineStore('todo', () => {
         initFromLocal,
         checkVersionAndUpdate
         ,markVersionCheckedNow
+        ,deleteCompletedTodos
     }
 }) 

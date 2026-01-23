@@ -57,18 +57,19 @@ app.use("/api/profile", profileRoutes);
 app.use("/api/version", versionRoutes);
 
 // 连接到数据库
+console.log(`尝试连接 MongoDB: ${process.env.MONGODB_URI ? '已配置' : '未配置'}`);
 mongoose
   .connect(process.env.MONGODB_URI)
   .then(() => {
     const { host, name: dbName } = mongoose.connection;
-    // console.log(`数据库连接成功 -> host: ${host}, db: ${dbName}`);
+    console.log(`数据库连接成功 -> host: ${host}, db: ${dbName}`);
     // 启动服务器（展示监听地址和 PORT 来源）
     app.listen(PORT, () => {
-      // console.log(
-      //   `服务器运行在 http://localhost:${PORT} (PORT 来源: ${
-      //     process.env.PORT ? "环境变量 PORT" : "默认 3000"
-      //   })`
-      // );
+      console.log(
+        `服务器运行在 http://localhost:${PORT} (PORT 来源: ${
+          process.env.PORT ? "环境变量 PORT" : "默认 3000"
+        })`
+      );
     });
   })
   .catch((error) => {
@@ -77,10 +78,11 @@ mongoose
 
 // 错误处理中间件
 app.use((err, req, res, next) => {
-  console.error(err.stack);
+  console.error(err.stack || err);
+  // 始终返回错误消息以便前端能够显示（开发环境中尤其有用）
   res.status(500).json({
     success: false,
-    message: "服务器内部错误",
-    error: process.env.NODE_ENV === "development" ? err.message : undefined,
+    message: err.message || "服务器内部错误",
+    // 为了安全考虑不返回完整堆栈到客户端
   });
 });

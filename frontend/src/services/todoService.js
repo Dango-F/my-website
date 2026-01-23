@@ -47,6 +47,17 @@ const todoService = {
         }
     },
 
+    // 批量删除所有已完成的待办事项
+    async deleteCompletedTodos() {
+        try {
+            const response = await axios.delete(`${API_URL}/todos/completed`);
+            return response.data;
+        } catch (error) {
+            console.error('批量删除已完成待办失败:', error);
+            throw error;
+        }
+    },
+
     // 切换待办事项完成状态
     async toggleTodoComplete(id, completed) {
         try {
