@@ -6,10 +6,14 @@ import TokenExpiredModal from "@/components/TokenExpiredModal.vue";
 import { onMounted, onUnmounted, watch } from "vue";
 import { useProfileStore } from "@/stores/profile";
 import { useAuthStore } from "@/stores/auth";
+import { useProjectStore } from "@/stores/project";
+import { useConfigStore } from "@/stores/config";
 
 const router = useRouter();
 const profileStore = useProfileStore();
 const authStore = useAuthStore();
+const projectStore = useProjectStore();
+const configStore = useConfigStore();
 
 // 页面可见性变化处理（防止休眠导致定时器延迟）
 const handleVisibilityChange = () => {
@@ -59,13 +63,13 @@ window.addEventListener('load', () => {
   // 调度预热：寻找浏览器空闲时间 (requestIdleCallback)
   const runIdleTask = window.requestIdleCallback || ((cb) => setTimeout(cb, 2000));
 
-  runIdleTask(() => {
+  runIdleTask(async () => {
     console.log("🛠️ 正在执行全站代码预测性预热...");
 
-    // 动态导入（Dynamic Import）：触发 Vite 的异步分包预下载
-    // 浏览器会自动将这些资源放入 Memory Cache，状态码显示为 200
+    // 1. 代码预热：动态导入页面组件
     const prefetchList = [
       () => import('./views/ProjectsView.vue'),
+      () => import('./views/ResumeView.vue'),
       () => import('./views/ResumeView.vue'),
       () => import('./views/TodoView.vue'),
       () => import('./views/ChangePasswordView.vue')
@@ -73,6 +77,28 @@ window.addEventListener('load', () => {
 
     // 逐个触发，不阻塞主线程
     prefetchList.forEach(loadComponent => loadComponent());
+
+    // 2. 数据预热：静默预取核心数据到 localStorage
+    try {
+      // 检查是否需要预取项目数据（如果用户已登录且配置了 GitHub Token）
+      if (authStore.token && configStore.githubToken && profileStore.profile?.github_username) {
+        // 先确保 config 已加载
+        await configStore.checkVersionAndUpdate();
+        
+        // 检查项目数据是否需要刷新
+        if (projectStore.projects.length === 0 || projectStore.shouldRefresh()) {
+          console.log("🚚 正在后台预取项目数据...");
+          // 静默预取项目数据，用户完全无感知
+          await projectStore.fetchGitHubRepos(profileStore.profile.github_username, configStore.githubToken);
+          console.log("✅ 核心数据已提前进入缓存");
+        } else {
+          console.log("📦 项目数据缓存有效，跳过预取");
+        }
+      }
+    } catch (error) {
+      // 静默失败，不影响首页体验
+      console.warn("⚠️ 数据预热失败（不影响正常使用）:", error.message);
+    }
     
     console.log("✅ 预热指令已发出，后续页面切换将实现 0ms 响应");
   });
