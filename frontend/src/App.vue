@@ -55,13 +55,6 @@ onMounted(async () => {
 
 // 性能优化：进站即预热 - 预测性预取页面组件
 window.addEventListener('load', () => {
-  // 弱网保护：如果是节流模式（Save Data）或 2G/3G 网络，不执行预热以节省流量
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (connection && (connection.saveData || /2g|3g/.test(connection.effectiveType))) {
-    console.warn("⚠️ 弱网或节流模式，跳过代码预热");
-    return;
-  }
-
   // 调度预热：寻找浏览器空闲时间 (requestIdleCallback)
   const runIdleTask = window.requestIdleCallback || ((cb) => setTimeout(cb, 2000));
 
