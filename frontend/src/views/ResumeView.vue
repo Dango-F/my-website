@@ -18,11 +18,26 @@ const isCollapsed = computed(() => sidebarStore.isCollapsed)
 
 const showTimelineEditor = ref(false)
 const dragIndex = ref(null)
+const refreshMessage = ref({ show: false, text: "", isError: false })
+const profileBlocked = ref(false)
 
 const refreshProfile = async () => {
-    if (!allowRequest('profile-refresh')) return;
-    if (profileStore.isLoading) return
-    await profileStore.fetchProfile()
+    if (profileStore.isLoading || profileBlocked.value) return
+
+    if (!allowRequest('profile-refresh')) {
+        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
+        setTimeout(() => { refreshMessage.value.show = false }, 1000);
+        profileBlocked.value = true
+        setTimeout(() => { profileBlocked.value = false }, 5000)
+        return
+    }
+
+    profileBlocked.value = true
+    try {
+        await profileStore.fetchProfile()
+    } finally {
+        setTimeout(() => { profileBlocked.value = false }, 5000)
+    }
 }
 
 function showContactInfo(type, value) {
@@ -87,13 +102,18 @@ const onDragEnd = () => {
             <div>
                 <div class="flex justify-between items-center mb-6">
                     <h1 class="text-2xl font-bold">个人简历</h1>
-                    <button @click="refreshProfile" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center" :disabled="profileStore.isLoading">
-                        <svg v-if="profileStore.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        <span v-else>刷新</span>
-                    </button>
+                    <div class="flex flex-col items-end gap-2">
+                        <button @click="refreshProfile" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center cursor-pointer" :disabled="profileStore.isLoading || profileBlocked">
+                            <svg v-if="profileStore.isLoading" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            <span v-else>刷新</span>
+                        </button>
+                        <div v-if="refreshMessage.show" class="text-sm px-2 py-1 rounded" :class="refreshMessage.isError ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'">
+                            {{ refreshMessage.text }}
+                        </div>
+                    </div>
                 </div>
 
                 <!-- 个人信息概述 -->

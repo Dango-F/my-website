@@ -75,6 +75,12 @@ window.addEventListener('load', () => {
     prefetchList.forEach(loadComponent => loadComponent());
 
     // 2. 数据预热：并行预取所有核心数据到 localStorage
+    // 检查是否已经预热过（同一个会话中）
+    if (sessionStorage.getItem('hasPreheated')) {
+      console.log("📦 已预热过，跳过预热，直接使用 localStorage 数据");
+      return;
+    }
+    
     try {
       console.log("🚀 开始并行数据预热...");
       // 设置全局预热标记，通知页面正在预热
@@ -111,23 +117,29 @@ window.addEventListener('load', () => {
           projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
             .then(() => {
               console.log("✅ 项目数据预热成功");
-              // 项目预热完成，清除全局标记
+              // 项目预热完成，清除全局标记并标记已预热
               window.__DATA_PREHEATING = false;
+              sessionStorage.setItem('hasPreheated', 'true');
             })
             .catch(err => {
               console.warn("⚠️ 项目数据预热失败:", err.message);
-              // 预热失败也要清除标记
+              // 预热失败也要清除标记并标记已预热
               window.__DATA_PREHEATING = false;
+              sessionStorage.setItem('hasPreheated', 'true');
             });
         } else {
-          // 跳过项目预热，直接清除标记
+          // 跳过项目预热，直接清除标记并标记已预热
+          console.log("📦 项目数据缓存有效，跳过预取");
           window.__DATA_PREHEATING = false;
+          sessionStorage.setItem('hasPreheated', 'true');
         }
       });
       
     } catch (error) {
       // 静默失败，不影响首页体验
       console.warn("⚠️ 数据预热失败（不影响正常使用）:", error.message);
+      // 即使失败也标记已预热，避免无限重试
+      sessionStorage.setItem('hasPreheated', 'true');
     }
   });
 });

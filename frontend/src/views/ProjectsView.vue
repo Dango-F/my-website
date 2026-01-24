@@ -30,6 +30,7 @@ const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
 const isPreheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
+const refreshMessage = ref({ show: false, text: "", isError: false })
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
 // 监听全局预热状态变化
@@ -137,6 +138,8 @@ const loadGitHubRepos = async () => {
 const forceRefreshGitHubRepos = async () => {
     if (projectBlocked.value) return
     if (!allowRequest('projects-refresh')) {
+        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
+        setTimeout(() => { refreshMessage.value.show = false }, 1000);
         projectBlocked.value = true
         setTimeout(() => { projectBlocked.value = false }, 5000)
         return
@@ -297,12 +300,16 @@ watch(() => configStore.githubToken, (newToken) => {
                         </div>
 
                         <button @click="forceRefreshGitHubRepos"
-                            class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
+                            class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
                             :disabled="projectStore.loading || projectBlocked">
                             <span v-if="projectStore.loading">获取中...</span>
                             <span v-else>刷新</span>
                         </button>
                     </div>
+                    <div v-if="refreshMessage.show" class="text-sm px-2 py-1 rounded" :class="refreshMessage.isError ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'">
+                        {{ refreshMessage.text }}
+                    </div>
+                </div>
                 </div>
 
                 <!-- 最后更新时间 -->
