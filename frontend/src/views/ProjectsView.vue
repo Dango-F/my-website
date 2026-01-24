@@ -28,20 +28,8 @@ const isEditingToken = ref(false)
 const sidebarStore = useSidebarStore()
 const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const isLoadingToken = ref(false)
+const isLoadingProjects = ref(false)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
-
-// 页面预热标记：由 App.vue 派发的 custom event 控制
-const preheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
-let __preheatListener = null
-onMounted(() => {
-    if (typeof window !== 'undefined' && window.addEventListener) {
-        __preheatListener = (ev) => { try { preheating.value = !!ev.detail?.active } catch (e) { preheating.value = false } }
-        window.addEventListener('data:preheating', __preheatListener)
-    }
-})
-onUnmounted(() => {
-    try { if (__preheatListener && typeof window !== 'undefined' && window.removeEventListener) window.removeEventListener('data:preheating', __preheatListener) } catch (e) { }
-})
 
 // 计算最后更新时间的友好显示
 const lastUpdateTime = computed(() => {
@@ -72,11 +60,14 @@ const loadGitHubTokenFromServer = async () => {
             isEditingToken.value = false;
             
             // 智能加载：只在必要时才调用 API
-            // 1. 没有缓存数据时
-            // 2. 缓存已过期（超过1小时）时
-            if (projectStore.projects.length === 0 || projectStore.shouldRefresh()) {
-                    // console.log('缓存无效或已过期，从 GitHub API 加载数据')
-                await loadGitHubRepos();
+            // 1. 没有缓存数据时，显示 loading
+            // 2. 缓存已过期时，静默刷新
+            if (projectStore.projects.length === 0) {
+                isLoadingProjects.value = true;
+                loadGitHubRepos().finally(() => isLoadingProjects.value = false);
+            } else if (projectStore.shouldRefresh()) {
+                // 缓存过期，静默刷新
+                loadGitHubRepos();
             } else {
                 // console.log('使用有效的缓存数据，最后更新于:', new Date(parseInt(projectStore.lastFetchTime)).toLocaleString())
             }
@@ -364,13 +355,13 @@ onMounted(async () => {
                 </p>
 
                 <!-- 加载状态（包括预热期间显示） -->
-                <div v-if="projectStore.loading || preheating" class="flex justify-center my-10">
+                <div v-if="projectStore.loading || isLoadingProjects" class="flex justify-center my-10">
                     <div class="animate-spin h-8 w-8 border-4 border-github-blue border-t-transparent rounded-full">
                     </div>
                 </div>
 
                 <!-- 提示用户加载数据 -->
-                    <div v-else-if="!preheating && projectStore.projects.length === 0 && !projectStore.lastFetchTime"
+                    <div v-else-if="isLoadingProjects || (projectStore.projects.length === 0 && !projectStore.lastFetchTime)"
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
@@ -415,7 +406,7 @@ onMounted(async () => {
                 </div>
 
                 <!-- 项目列表（仅在非预热且非加载时显示） -->
-                <div v-if="!projectStore.loading && !preheating && filteredProjects.length" class="space-y-4">
+                <div v-if="!projectStore.loading && !isLoadingProjects && filteredProjects.length" class="space-y-4">
                     <RepoCard v-for="project in paginatedProjects" :key="project.id" :project="project" />
 
                     <!-- 分页器 -->

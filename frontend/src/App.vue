@@ -74,73 +74,35 @@ window.addEventListener('load', () => {
     // 逐个触发，不阻塞主线程
     prefetchList.forEach(loadComponent => loadComponent());
 
-    // 2. 数据预热：静默预取所有核心数据到 localStorage
+    // 2. 数据预热：并行预取所有核心数据到 localStorage
     try {
-      console.log("🚀 开始全量数据预热...");
-      // 标记全局数据预热开始，通知页面显示加载状态
-      try { window.__DATA_PREHEATING = true; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: true } })); } catch (e) { /* noop */ }
+      console.log("🚀 开始并行数据预热...");
       
-      // 第一步：优先加载配置数据，确保 githubToken 可用
-      console.log("📋 第一步：加载配置数据...");
-      try {
-        await configStore.checkVersionAndUpdate();
-        console.log("✅ 配置数据加载完成");
-      } catch (err) {
-        console.warn("⚠️ 配置数据加载失败:", err.message);
-      }
+      // 并行启动，不等待完成
+      // 配置数据
+      configStore.checkVersionAndUpdate().catch(err => console.warn("⚠️ 配置数据加载失败:", err.message));
       
-      // 第二步：预取 Profile 数据
-      console.log("👤 第二步：预取 Profile 数据...");
-      try {
-        await profileStore.fetchProfile();
-        console.log("✅ Profile 数据预热成功");
-      } catch (err) {
-        console.warn("⚠️ Profile 预热失败:", err.message);
-      }
+      // Profile 数据
+      profileStore.fetchProfile().catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
       
-      // 第三步：预取项目数据（因为 GitHub API 可能较慢）
-      console.log("📦 第三步：预取项目数据...");
-      const githubUsername = profileStore.profile?.github_username || 'Dango-F';
-      const githubToken = configStore.githubToken;
+      // Todos 数据
+      todoStore.fetchTodos().catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
       
-      console.log("🔑 GitHub Token 状态:", githubToken ? "✅ 已配置" : "❌ 未配置");
-      console.log("👤 GitHub 用户名:", githubUsername);
-      
-      if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
-        console.log("🚚 正在后台预取项目数据...");
-        try {
-          await projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true });
-          console.log("✅ 项目数据预热成功");
-        } catch (err) {
-          console.warn("⚠️ 项目数据预热失败:", err.message);
-          if (githubToken) {
-            console.warn("💡 Token 可能已过期，建议检查 GitHub Token 配置");
-          } else {
-            console.warn("💡 未配置 GitHub Token，使用公开 API（有速率限制）");
-          }
+      // 项目数据（依赖 Profile 和 Config）
+      // 延迟一下，确保 Profile 和 Config 先完成
+      setTimeout(() => {
+        const githubUsername = profileStore.profile?.github_username || 'Dango-F';
+        const githubToken = configStore.githubToken;
+        
+        if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
+          projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true }).catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
         }
-      } else {
-        console.log("📦 项目数据缓存有效，跳过预取");
-      }
+      }, 100);
       
-      // 第四步：预取 Todos 数据
-      console.log("📋 第四步：预取 Todos 数据...");
-      try {
-        await todoStore.fetchTodos();
-        console.log("✅ Todos 数据预热成功");
-      } catch (err) {
-        console.warn("⚠️ Todos 预热失败:", err.message);
-      }
-      
-      console.log("✅ 全量数据预热完成，所有数据已缓存到 localStorage");
     } catch (error) {
       // 静默失败，不影响首页体验
       console.warn("⚠️ 数据预热失败（不影响正常使用）:", error.message);
     }
-    
-    // 预热完成，清理全局标记并通知页面
-    try { window.__DATA_PREHEATING = false; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: false } })); } catch (e) { /* noop */ }
-    console.log("✅ 预热指令已发出，后续页面切换将实现 0ms 响应");
   });
 });
 
