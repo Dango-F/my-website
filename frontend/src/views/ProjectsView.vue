@@ -310,7 +310,6 @@ watch(() => configStore.githubToken, (newToken) => {
                         {{ refreshMessage.text }}
                     </div>
                 </div>
-                </div>
 
                 <!-- 最后更新时间 -->
                 <div v-if="projectStore.lastFetchTime" class="text-sm text-github-gray mb-4 flex items-center">
