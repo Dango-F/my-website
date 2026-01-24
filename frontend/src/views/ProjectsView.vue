@@ -31,6 +31,11 @@ const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
+// 立即根据 store 状态初始化，并监听 store.loading 以便在预热期间立即显示 loading
+isLoadingProjects.value = projectStore.loading
+watch(() => projectStore.loading, (v) => { isLoadingProjects.value = v })
+// 当本地已有项目数据时，确保关闭本地 loading 状态
+watch(() => projectStore.projects.length, (len) => { if (len > 0) isLoadingProjects.value = false })
 // 计算最后更新时间的友好显示
 const lastUpdateTime = computed(() => {
     if (!projectStore.lastFetchTime) return '未获取过数据'
