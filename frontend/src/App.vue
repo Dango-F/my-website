@@ -77,10 +77,6 @@ window.addEventListener('load', () => {
     // 2. 数据预热：并行预取所有核心数据到 localStorage
     try {
       console.log("🚀 开始并行数据预热...");
-
-      // 通知页面：预热已开始（供组件显示局部 loading）
-      try { window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: true } })); } catch (e) { /* noop */ }
-
       // 并行启动，不等待完成
       // 配置数据
       const configPromise = configStore.checkVersionAndUpdate()
@@ -88,41 +84,38 @@ window.addEventListener('load', () => {
           console.log("✅ 配置数据预热成功");
           console.log("🔑 GitHub Token 获取状态:", configStore.githubToken ? "✅ 已获取" : "❌ 未获取");
         })
-        .catch(err => {
-          console.warn("⚠️ 配置数据加载失败:", err.message);
-        });
-
+        .catch(err => console.warn("⚠️ 配置数据加载失败:", err.message));
+      
       // Profile 数据
       const profilePromise = profileStore.fetchProfile()
         .then(() => console.log("✅ Profile 数据预热成功"))
         .catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
-
+      
       // Todos 数据
-      const todosPromise = todoStore.fetchTodos()
+        const todosPromise = todoStore.fetchTodos()
         .then(() => console.log("✅ Todos 数据预热成功"))
         .catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
-
+      
       // 项目数据（等待 Profile 和 Config 完成）
-      const projectPromise = Promise.all([profilePromise, configPromise]).then(() => {
+      Promise.all([profilePromise, configPromise]).then(() => {
         const githubUsername = profileStore.profile?.github_username || 'Dango-F';
         const githubToken = configStore.githubToken;
-
+        
         console.log("🔑 GitHub Token 状态:", githubToken ? "✅ 已配置" : "❌ 未配置");
         console.log("👤 GitHub 用户名:", githubUsername);
-
+        
         if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
-          return projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
+          projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
             .then(() => console.log("✅ 项目数据预热成功"))
             .catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
         }
-        return Promise.resolve();
-      }).catch(() => Promise.resolve());
-
-      // 当所有预热任务至少完成（成功或失败）后，通知页面预热结束
-      Promise.allSettled([configPromise, profilePromise, todosPromise, projectPromise]).then(() => {
-        try { window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: false } })); } catch (e) { /* noop */ }
-        console.log("ℹ️ 已发出 data:preheating=false 事件");
       });
+        // 当所有预热关键任务都 settle 后，清理预热标记
+        Promise.allSettled([configPromise, profilePromise, todosPromise])
+          .then(() => {
+            try { window.__DATA_PREHEATING = false; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: false } })); } catch (e) { /* noop */ }
+            console.log("✅ 预热指令已发出（所有预热任务已开始/结束）");
+          });
       
     } catch (error) {
       // 静默失败，不影响首页体验

@@ -31,21 +31,12 @@ const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-// 页面预热标记监听：由 App.vue 派发的 custom event 控制局部 loading
+// 预热状态：由 App.vue 在预热开始/结束时派发 CustomEvent('data:preheating')
+const preheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
 let __preheatListener = null
 onMounted(() => {
     if (typeof window !== 'undefined' && window.addEventListener) {
-        __preheatListener = (ev) => {
-            try {
-                if (ev.detail?.active) {
-                    // 预热开始：显示局部 loading（仅用于提示）
-                    isLoadingProjects.value = true
-                } else {
-                    // 预热结束：如果项目未在实际加载中，取消局部 loading
-                    if (!projectStore.loading) isLoadingProjects.value = false
-                }
-            } catch (e) { /* noop */ }
-        }
+        __preheatListener = (ev) => { try { preheating.value = !!ev.detail?.active } catch (e) { preheating.value = !!(typeof window !== 'undefined' && window.__DATA_PREHEATING) } }
         window.addEventListener('data:preheating', __preheatListener)
     }
 })
@@ -376,8 +367,8 @@ onMounted(async () => {
                     {{ projectStore.error }}
                 </p>
 
-                <!-- 加载状态（包括预热期间显示） -->
-                <div v-if="projectStore.loading || isLoadingProjects" class="flex justify-center my-10">
+                <!-- 加载状态（包括全局预热开始时显示） -->
+                <div v-if="projectStore.loading || isLoadingProjects || preheating" class="flex justify-center my-10">
                     <div class="animate-spin h-8 w-8 border-4 border-github-blue border-t-transparent rounded-full">
                     </div>
                 </div>
