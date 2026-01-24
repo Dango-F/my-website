@@ -77,6 +77,9 @@ window.addEventListener('load', () => {
     // 2. 数据预热：并行预取所有核心数据到 localStorage
     try {
       console.log("🚀 开始并行数据预热...");
+      // 设置全局预热标记，通知页面正在预热
+      window.__DATA_PREHEATING = true;
+      
       // 并行启动，不等待完成
       // 配置数据
       const configPromise = configStore.checkVersionAndUpdate()
@@ -92,7 +95,7 @@ window.addEventListener('load', () => {
         .catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
       
       // Todos 数据
-        const todosPromise = todoStore.fetchTodos()
+      todoStore.fetchTodos()
         .then(() => console.log("✅ Todos 数据预热成功"))
         .catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
       
@@ -106,16 +109,21 @@ window.addEventListener('load', () => {
         
         if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
           projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
-            .then(() => console.log("✅ 项目数据预热成功"))
-            .catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
+            .then(() => {
+              console.log("✅ 项目数据预热成功");
+              // 项目预热完成，清除全局标记
+              window.__DATA_PREHEATING = false;
+            })
+            .catch(err => {
+              console.warn("⚠️ 项目数据预热失败:", err.message);
+              // 预热失败也要清除标记
+              window.__DATA_PREHEATING = false;
+            });
+        } else {
+          // 跳过项目预热，直接清除标记
+          window.__DATA_PREHEATING = false;
         }
       });
-        // 当所有预热关键任务都 settle 后，清理预热标记
-        Promise.allSettled([configPromise, profilePromise, todosPromise])
-          .then(() => {
-            try { window.__DATA_PREHEATING = false; window.dispatchEvent(new CustomEvent('data:preheating', { detail: { active: false } })); } catch (e) { /* noop */ }
-            console.log("✅ 预热指令已发出（所有预热任务已开始/结束）");
-          });
       
     } catch (error) {
       // 静默失败，不影响首页体验

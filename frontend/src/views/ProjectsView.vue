@@ -29,20 +29,18 @@ const sidebarStore = useSidebarStore()
 const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
+const isPreheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-// 预热状态：由 App.vue 在预热开始/结束时派发 CustomEvent('data:preheating')
-const preheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
-let __preheatListener = null
-onMounted(() => {
-    if (typeof window !== 'undefined' && window.addEventListener) {
-        __preheatListener = (ev) => { try { preheating.value = !!ev.detail?.active } catch (e) { preheating.value = !!(typeof window !== 'undefined' && window.__DATA_PREHEATING) } }
-        window.addEventListener('data:preheating', __preheatListener)
+// 监听全局预热状态变化
+if (typeof window !== 'undefined') {
+    const checkPreheating = () => {
+        isPreheating.value = !!(window.__DATA_PREHEATING)
     }
-})
-onUnmounted(() => {
-    try { if (__preheatListener && typeof window !== 'undefined' && window.removeEventListener) window.removeEventListener('data:preheating', __preheatListener) } catch (e) { }
-})
+    // 使用定时器监听（简单粗暴但有效）
+    const preheatingTimer = setInterval(checkPreheating, 100)
+    onUnmounted(() => clearInterval(preheatingTimer))
+}
 
 // 计算最后更新时间的友好显示
 const lastUpdateTime = computed(() => {
@@ -367,14 +365,14 @@ onMounted(async () => {
                     {{ projectStore.error }}
                 </p>
 
-                <!-- 加载状态（包括全局预热开始时显示） -->
-                <div v-if="projectStore.loading || isLoadingProjects || preheating" class="flex justify-center my-10">
+                <!-- 加载状态（包括预热期间显示） -->
+                <div v-if="projectStore.loading || isLoadingProjects || (isPreheating && projectStore.projects.length === 0)" class="flex justify-center my-10">
                     <div class="animate-spin h-8 w-8 border-4 border-github-blue border-t-transparent rounded-full">
                     </div>
                 </div>
 
                 <!-- 提示用户加载数据 -->
-                    <div v-else-if="isLoadingProjects || (projectStore.projects.length === 0 && !projectStore.lastFetchTime)"
+                    <div v-else-if="!isPreheating && (isLoadingProjects || (projectStore.projects.length === 0 && !projectStore.lastFetchTime))"
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
