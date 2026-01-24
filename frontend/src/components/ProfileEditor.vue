@@ -113,7 +113,7 @@ const saveProfile = async () => {
         setTimeout(() => {
             emit('saved')
             emit('close')
-        }, 1000)
+        }, 1500)
     } catch (error) {
         saveMessage.value = {
             show: true,

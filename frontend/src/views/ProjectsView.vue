@@ -30,6 +30,7 @@ const isCollapsed = computed(() => sidebarStore.isCollapsed)
 const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
 const isPreheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
+const isRefreshing = ref(false)
 const refreshMessage = ref({ show: false, text: "", isError: false })
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
@@ -109,51 +110,72 @@ const saveGitHubTokenToServer = async (token) => {
     }
 };
 
-// 防抖状态，控制按钮禁用以改善 UX
-const projectBlocked = ref(false)
-
 // 修改加载GitHub仓库函数（使用共享请求单例 + 5s 防抖）
 const loadGitHubRepos = async () => {
-    if (projectBlocked.value) return
+    if (isRefreshing.value) return
     // allowRequest 内部默认 5000ms
     if (!allowRequest('projects-refresh')) {
-        // 同步本地阻塞状态以禁用按钮
-        projectBlocked.value = true
-        setTimeout(() => { projectBlocked.value = false }, 5000)
+        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
+        setTimeout(() => { refreshMessage.value.show = false }, 1500);
         return
     }
 
-    projectBlocked.value = true
+    isRefreshing.value = true
     try {
         if (githubUsername.value) {
             await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value, { useSharedPromise: true })
         }
+        refreshMessage.value = {
+            show: true,
+            text: "数据加载成功！",
+            isError: false,
+        };
+        setTimeout(() => {
+            refreshMessage.value.show = false;
+        }, 1500);
+    } catch (error) {
+        refreshMessage.value = {
+            show: true,
+            text: `加载失败: ${error.message}`,
+            isError: true,
+        };
     } finally {
-        // 保持本地禁用 5s，防止连点
-        setTimeout(() => { projectBlocked.value = false }, 5000)
+        isRefreshing.value = false
     }
 }
 
 // 强制刷新函数（赋予最高优先级，无视并发保护）
 const forceRefreshGitHubRepos = async () => {
-    if (projectBlocked.value) return
+    if (isRefreshing.value) return;
     if (!allowRequest('projects-refresh')) {
         refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
-        setTimeout(() => { refreshMessage.value.show = false }, 1000);
-        projectBlocked.value = true
-        setTimeout(() => { projectBlocked.value = false }, 5000)
-        return
+        setTimeout(() => { refreshMessage.value.show = false }, 1500);
+        return;
     }
+    isRefreshing.value = true;
 
-    projectBlocked.value = true
     try {
         if (githubUsername.value) {
             console.log("🔄 手动强制刷新项目数据...")
             await projectStore.forceRefreshGitHubRepos(githubUsername.value, githubToken.value)
             console.log("✅ 强制刷新完成")
         }
+        refreshMessage.value = {
+            show: true,
+            text: "数据刷新成功！",
+            isError: false,
+        };
+        setTimeout(() => {
+            refreshMessage.value.show = false;
+        }, 1500);
+    } catch (error) {
+        refreshMessage.value = {
+            show: true,
+            text: `刷新失败: ${error.message}`,
+            isError: true,
+        };
     } finally {
-        setTimeout(() => { projectBlocked.value = false }, 5000)
+        isRefreshing.value = false;
     }
 }
 
@@ -301,12 +323,22 @@ watch(() => configStore.githubToken, (newToken) => {
 
                         <button @click="forceRefreshGitHubRepos"
                             class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
-                            :disabled="projectStore.loading || projectBlocked">
-                            <span v-if="projectStore.loading">获取中...</span>
+                            :disabled="isRefreshing">
+                            <span v-if="isRefreshing">刷新中...</span>
                             <span v-else>刷新</span>
                         </button>
                     </div>
-                    <div v-if="refreshMessage.show" class="text-sm px-2 py-1 rounded" :class="refreshMessage.isError ? 'text-red-600 bg-red-50' : 'text-blue-600 bg-blue-50'">
+                </div>
+
+                <!-- 刷新状态消息 -->
+                <div v-if="refreshMessage.show" class="mb-4">
+                    <div
+                        :class="[
+                        'p-3 rounded-md',
+                        refreshMessage.isError
+                            ? 'bg-red-100 text-red-700 dark:bg-red-900 dark:text-red-300'
+                            : 'bg-green-100 text-green-700 dark:bg-green-900 dark:text-green-300'
+                        ]">
                         {{ refreshMessage.text }}
                     </div>
                 </div>
@@ -392,8 +424,8 @@ watch(() => configStore.githubToken, (newToken) => {
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
-                        class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
-                        :disabled="projectStore.loading || projectBlocked">
+                        class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
+                        :disabled="isRefreshing">
                         从GitHub获取仓库
                     </button>
                 </div>

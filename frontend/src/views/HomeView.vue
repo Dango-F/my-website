@@ -57,7 +57,7 @@ const typeWriter = async () => {
     }
 
     // 循环结束后等待一段时间再重新开始
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 1500));
   }
 };
 
@@ -66,7 +66,7 @@ const refreshData = async () => {
   if (isRefreshing.value) return;
   if (!allowRequest('home-refresh')) {
     refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
-    setTimeout(() => { refreshMessage.value.show = false }, 1000);
+    setTimeout(() => { refreshMessage.value.show = false }, 1500);
     return;
   }
   isRefreshing.value = true;
@@ -108,7 +108,7 @@ const refreshData = async () => {
     // 1秒后自动隐藏消息
     setTimeout(() => {
       refreshMessage.value.show = false;
-    }, 1000);
+    }, 1500);
   } catch (error) {
     refreshMessage.value = {
       show: true,
