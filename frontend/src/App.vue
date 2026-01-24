@@ -94,8 +94,12 @@ window.addEventListener('load', () => {
         const githubUsername = profileStore.profile?.github_username || 'Dango-F';
         const githubToken = configStore.githubToken;
         
-        if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
-          projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true }).catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
+        if (githubToken) {
+          if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
+            projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true }).catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
+          }
+        } else {
+          console.warn("⚠️ GitHub Token 未配置，跳过项目数据预热");
         }
       }, 100);
       
