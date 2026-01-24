@@ -31,11 +31,28 @@ const isLoadingToken = ref(false)
 const isLoadingProjects = ref(false)
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
 
-// 立即根据 store 状态初始化，并监听 store.loading 以便在预热期间立即显示 loading
-isLoadingProjects.value = projectStore.loading
-watch(() => projectStore.loading, (v) => { isLoadingProjects.value = v })
-// 当本地已有项目数据时，确保关闭本地 loading 状态
-watch(() => projectStore.projects.length, (len) => { if (len > 0) isLoadingProjects.value = false })
+// 页面预热标记监听：由 App.vue 派发的 custom event 控制局部 loading
+let __preheatListener = null
+onMounted(() => {
+    if (typeof window !== 'undefined' && window.addEventListener) {
+        __preheatListener = (ev) => {
+            try {
+                if (ev.detail?.active) {
+                    // 预热开始：显示局部 loading（仅用于提示）
+                    isLoadingProjects.value = true
+                } else {
+                    // 预热结束：如果项目未在实际加载中，取消局部 loading
+                    if (!projectStore.loading) isLoadingProjects.value = false
+                }
+            } catch (e) { /* noop */ }
+        }
+        window.addEventListener('data:preheating', __preheatListener)
+    }
+})
+onUnmounted(() => {
+    try { if (__preheatListener && typeof window !== 'undefined' && window.removeEventListener) window.removeEventListener('data:preheating', __preheatListener) } catch (e) { }
+})
+
 // 计算最后更新时间的友好显示
 const lastUpdateTime = computed(() => {
     if (!projectStore.lastFetchTime) return '未获取过数据'
