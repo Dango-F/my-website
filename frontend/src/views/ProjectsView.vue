@@ -32,7 +32,14 @@ const isLoadingProjects = ref(false)
 const isPreheating = ref(!!(typeof window !== 'undefined' && window.__DATA_PREHEATING))
 const isRefreshing = ref(false)
 const refreshMessage = ref({ show: false, text: "", isError: false })
+let messageTimer = null
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api';
+
+const showMessage = (text, isError = false) => {
+    if (messageTimer) clearTimeout(messageTimer)
+    refreshMessage.value = { show: true, text, isError }
+    messageTimer = setTimeout(() => { refreshMessage.value.show = false }, 1500)
+}
 
 // 监听全局预热状态变化
 if (typeof window !== 'undefined') {
@@ -115,8 +122,7 @@ const loadGitHubRepos = async () => {
     if (isRefreshing.value) return
     // allowRequest 内部默认 5000ms
     if (!allowRequest('projects-refresh')) {
-        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
-        setTimeout(() => { refreshMessage.value.show = false }, 1500);
+        showMessage('请勿频繁刷新（5秒内最多一次）', false)
         return
     }
 
@@ -125,20 +131,9 @@ const loadGitHubRepos = async () => {
         if (githubUsername.value) {
             await projectStore.fetchGitHubRepos(githubUsername.value, githubToken.value, { useSharedPromise: true })
         }
-        refreshMessage.value = {
-            show: true,
-            text: "数据加载成功！",
-            isError: false,
-        };
-        setTimeout(() => {
-            refreshMessage.value.show = false;
-        }, 1500);
+        showMessage("数据加载成功！", false)
     } catch (error) {
-        refreshMessage.value = {
-            show: true,
-            text: `加载失败: ${error.message}`,
-            isError: true,
-        };
+        showMessage(`加载失败: ${error.message}`, true)
     } finally {
         isRefreshing.value = false
     }
@@ -148,8 +143,7 @@ const loadGitHubRepos = async () => {
 const forceRefreshGitHubRepos = async () => {
     if (isRefreshing.value) return;
     if (!allowRequest('projects-refresh')) {
-        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
-        setTimeout(() => { refreshMessage.value.show = false }, 1500);
+        showMessage('请勿频繁刷新（5秒内最多一次）', false)
         return;
     }
     isRefreshing.value = true;
@@ -160,20 +154,9 @@ const forceRefreshGitHubRepos = async () => {
             await projectStore.forceRefreshGitHubRepos(githubUsername.value, githubToken.value)
             console.log("✅ 强制刷新完成")
         }
-        refreshMessage.value = {
-            show: true,
-            text: "数据刷新成功！",
-            isError: false,
-        };
-        setTimeout(() => {
-            refreshMessage.value.show = false;
-        }, 1500);
+        showMessage("数据刷新成功！", false)
     } catch (error) {
-        refreshMessage.value = {
-            show: true,
-            text: `刷新失败: ${error.message}`,
-            isError: true,
-        };
+        showMessage(`刷新失败: ${error.message}`, true)
     } finally {
         isRefreshing.value = false;
     }

@@ -21,31 +21,27 @@ const dragIndex = ref(null)
 
 const isRefreshing = ref(false)
 const refreshMessage = ref({ show: false, text: "", isError: false })
+let messageTimer = null
+
+const showMessage = (text, isError = false) => {
+    if (messageTimer) clearTimeout(messageTimer)
+    refreshMessage.value = { show: true, text, isError }
+    messageTimer = setTimeout(() => { refreshMessage.value.show = false }, 1500)
+}
+
 const refreshProfile = async () => {
     if (isRefreshing.value) return;
     if (!allowRequest('profile-refresh')) {
-        refreshMessage.value = { show: true, text: '请勿频繁刷新（5秒内最多一次）', isError: false };
-        setTimeout(() => { refreshMessage.value.show = false }, 1500);
+        showMessage('请勿频繁刷新（5秒内最多一次）', false);
         return;
     }
     isRefreshing.value = true;
 
     try {
         await profileStore.fetchProfile()
-        refreshMessage.value = {
-            show: true,
-            text: "数据刷新成功！",
-            isError: false,
-        };
-        setTimeout(() => {
-            refreshMessage.value.show = false;
-        }, 1500);
+        showMessage("数据刷新成功！", false);
     } catch (error) {
-        refreshMessage.value = {
-            show: true,
-            text: `刷新失败: ${error.message}`,
-            isError: true,
-        };
+        showMessage(`刷新失败: ${error.message}`, true);
     } finally {
         isRefreshing.value = false;
     }
