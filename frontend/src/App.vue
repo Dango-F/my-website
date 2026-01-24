@@ -80,7 +80,7 @@ window.addEventListener('load', () => {
       
       // 并行启动，不等待完成
       // 配置数据
-      configStore.checkVersionAndUpdate()
+      const configPromise = configStore.checkVersionAndUpdate()
         .then(() => {
           console.log("✅ 配置数据预热成功");
           console.log("🔑 GitHub Token 获取状态:", configStore.githubToken ? "✅ 已获取" : "❌ 未获取");
@@ -88,7 +88,7 @@ window.addEventListener('load', () => {
         .catch(err => console.warn("⚠️ 配置数据加载失败:", err.message));
       
       // Profile 数据
-      profileStore.fetchProfile()
+      const profilePromise = profileStore.fetchProfile()
         .then(() => console.log("✅ Profile 数据预热成功"))
         .catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
       
@@ -97,18 +97,20 @@ window.addEventListener('load', () => {
         .then(() => console.log("✅ Todos 数据预热成功"))
         .catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
       
-      // 项目数据（依赖 Profile 和 Config）
-      // 延迟一下，确保 Profile 和 Config 先完成
-      setTimeout(() => {
+      // 项目数据（等待 Profile 和 Config 完成）
+      Promise.all([profilePromise, configPromise]).then(() => {
         const githubUsername = profileStore.profile?.github_username || 'Dango-F';
         const githubToken = configStore.githubToken;
+        
+        console.log("🔑 GitHub Token 状态:", githubToken ? "✅ 已配置" : "❌ 未配置");
+        console.log("👤 GitHub 用户名:", githubUsername);
         
         if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
           projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
             .then(() => console.log("✅ 项目数据预热成功"))
             .catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
         }
-      }, 100);
+      });
       
     } catch (error) {
       // 静默失败，不影响首页体验
