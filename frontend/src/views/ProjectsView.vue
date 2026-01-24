@@ -244,6 +244,16 @@ onMounted(async () => {
     // 先尝试从服务器加载令牌
     await loadGitHubTokenFromServer();
 });
+
+// 监听 configStore.githubToken 变化，及时更新本地状态
+watch(() => configStore.githubToken, (newToken) => {
+    if (newToken) {
+        githubToken.value = newToken;
+        hasConfiguredToken.value = true;
+    } else {
+        hasConfiguredToken.value = false;
+    }
+}, { immediate: true });
 </script>
 
 <template>
