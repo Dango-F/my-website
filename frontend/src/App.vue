@@ -80,13 +80,22 @@ window.addEventListener('load', () => {
       
       // 并行启动，不等待完成
       // 配置数据
-      configStore.checkVersionAndUpdate().catch(err => console.warn("⚠️ 配置数据加载失败:", err.message));
+      configStore.checkVersionAndUpdate()
+        .then(() => {
+          console.log("✅ 配置数据预热成功");
+          console.log("🔑 GitHub Token 获取状态:", configStore.githubToken ? "✅ 已获取" : "❌ 未获取");
+        })
+        .catch(err => console.warn("⚠️ 配置数据加载失败:", err.message));
       
       // Profile 数据
-      profileStore.fetchProfile().catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
+      profileStore.fetchProfile()
+        .then(() => console.log("✅ Profile 数据预热成功"))
+        .catch(err => console.warn("⚠️ Profile 预热失败:", err.message));
       
       // Todos 数据
-      todoStore.fetchTodos().catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
+      todoStore.fetchTodos()
+        .then(() => console.log("✅ Todos 数据预热成功"))
+        .catch(err => console.warn("⚠️ Todos 预热失败:", err.message));
       
       // 项目数据（依赖 Profile 和 Config）
       // 延迟一下，确保 Profile 和 Config 先完成
@@ -94,12 +103,10 @@ window.addEventListener('load', () => {
         const githubUsername = profileStore.profile?.github_username || 'Dango-F';
         const githubToken = configStore.githubToken;
         
-        if (githubToken) {
-          if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
-            projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true }).catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
-          }
-        } else {
-          console.warn("⚠️ GitHub Token 未配置，跳过项目数据预热");
+        if (projectStore.projects.length === 0 || (projectStore.shouldRefresh && projectStore.shouldRefresh())) {
+          projectStore.fetchGitHubRepos(githubUsername, githubToken, { useSharedPromise: true })
+            .then(() => console.log("✅ 项目数据预热成功"))
+            .catch(err => console.warn("⚠️ 项目数据预热失败:", err.message));
         }
       }, 100);
       
