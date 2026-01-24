@@ -78,6 +78,9 @@ const refreshTodos = async () => {
                         {{ refreshMessage.text }}
                     </div>
                 </div>
+
+                <!-- 待办事项组件 -->
+                <Todo />
             </div>
         </div>
     </div>
