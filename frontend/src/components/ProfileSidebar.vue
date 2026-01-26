@@ -141,7 +141,7 @@ onBeforeUnmount(() => {
             <button
               v-if="authStore.isAuthenticated"
               @click="openProfileEditor"
-              class="touch-target absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
+              class="profile-edit-btn touch-target absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
               title="编辑个人信息"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
           <h3 class="font-medium mb-2 text-[var(--color-text-primary)]">
             社交媒体
           </h3>
-          <div class="flex space-x-4">
+          <div class="profile-social-links flex space-x-4 md:space-x-1">
             <a
               v-if="profile.github"
               :href="profile.github"

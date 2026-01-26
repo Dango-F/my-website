@@ -276,10 +276,10 @@ watch(() => configStore.githubToken, (newToken) => {
             <!-- 主内容区 -->
             <div>
                 <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
-                    <h1 class="text-xl sm:text-2xl font-bold">项目</h1>
+                    <h1 class="text-xl sm:text-2xl font-bold shrink-0 whitespace-nowrap">项目</h1>
 
                     <!-- GitHub用户名输入 -->
-                    <div class="flex flex-col gap-3 w-full sm:flex-row sm:flex-wrap sm:items-center">
+                    <div class="flex flex-col gap-3 w-full sm:flex-row sm:flex-wrap sm:items-center md:w-auto md:flex-nowrap">
                         <input v-model="githubUsername" type="text" placeholder="GitHub用户名"
                             class="w-full sm:w-56 md:w-64 p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
 

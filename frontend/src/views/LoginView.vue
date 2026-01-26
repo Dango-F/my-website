@@ -70,7 +70,7 @@ const handleLogin = async () => {
                 <LockClosedIcon class="w-5 h-5 text-gray-400 absolute left-3 top-3.5" />
                 <button
                   type="button"
-                  class="touch-target absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  class="password-toggle touch-target absolute right-2 top-2.5 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
                   :aria-label="showPassword ? '隐藏密码' : '显示密码'"
                   @click="showPassword = !showPassword"
                   :disabled="authStore.isLoading"
