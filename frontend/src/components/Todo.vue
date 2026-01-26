@@ -131,11 +131,11 @@ const refreshTodos = async () => {
   <div
     class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md p-4"
   >
-    <div class="flex justify-between items-center mb-4">
-      <h2 class="text-xl font-semibold">待办事项</h2>
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+      <h2 class="text-lg sm:text-xl font-semibold">待办事项</h2>
       <button
         @click="refreshTodos"
-        class="no-hover-effect text-github-blue hover:text-blue-700"
+        class="touch-target no-hover-effect text-github-blue hover:text-blue-700"
         :class="{ 'animate-spin': isRefreshing }"
       >
         <!-- <svg
@@ -171,12 +171,12 @@ const refreshTodos = async () => {
           @keyup.enter="addTodo"
           type="text"
           placeholder="添加新待办..."
-          class="w-full p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+          class="w-full p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
         />
-        <div class="flex gap-2">
+        <div class="flex flex-col gap-2 sm:flex-row">
           <select
             v-model="newCategory"
-            class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+            class="w-full sm:w-auto p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
           >
             <option value="" disabled>选择分类</option>
             <option
@@ -189,7 +189,7 @@ const refreshTodos = async () => {
           </select>
           <select
             v-model="newPriority"
-            class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+            class="w-full sm:w-auto p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
           >
             <option value="" disabled>选择优先级</option>
             <option value="high">高优先级</option>
@@ -198,14 +198,14 @@ const refreshTodos = async () => {
           </select>
           <button
             @click="addTodo"
-            class="no-hover-effect px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
+            class="touch-target w-full sm:w-auto no-hover-effect px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700"
             :disabled="todoStore.isLoading"
           >
             {{ todoStore.isLoading ? "添加中..." : "添加" }}
           </button>
           <button
             @click="deleteAllCompleted"
-            class="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            class="touch-target w-full sm:w-auto px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
             :disabled="todoStore.isLoading"
             title="一键删除所有已完成代办（仅管理员可用）"
           >
@@ -216,14 +216,14 @@ const refreshTodos = async () => {
     </div>
 
     <!-- 过滤器 -->
-    <div class="mb-4 flex flex-wrap gap-2">
+    <div class="mb-4 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
       <div
         class="flex border border-[var(--color-border)] rounded-md overflow-hidden"
       >
         <button
           @click="filter = 'all'"
           :class="[
-            'no-hover-effect px-3 py-1',
+            'touch-target no-hover-effect px-4 py-2',
             filter === 'all'
               ? 'bg-github-blue text-white'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800',
@@ -234,7 +234,7 @@ const refreshTodos = async () => {
         <button
           @click="filter = 'active'"
           :class="[
-            'no-hover-effect px-3 py-1',
+            'touch-target no-hover-effect px-4 py-2',
             filter === 'active'
               ? 'bg-github-blue text-white'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800',
@@ -245,7 +245,7 @@ const refreshTodos = async () => {
         <button
           @click="filter = 'completed'"
           :class="[
-            'no-hover-effect px-3 py-1',
+            'touch-target no-hover-effect px-4 py-2',
             filter === 'completed'
               ? 'bg-github-blue text-white'
               : 'hover:bg-gray-100 dark:hover:bg-gray-800',
@@ -257,7 +257,7 @@ const refreshTodos = async () => {
 
       <select
         v-model="categoryFilter"
-        class="p-1 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
+        class="w-full sm:w-auto p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]"
       >
         <option value="">所有分类</option>
         <option
@@ -287,10 +287,10 @@ const refreshTodos = async () => {
         <div
           v-for="todo in sortedFilteredTodos"
           :key="todo._id || todo.id"
-          class="p-3 mb-2 border border-[var(--color-border)] rounded-md flex items-center justify-between"
+          class="p-3 mb-2 border border-[var(--color-border)] rounded-md flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
           :class="{ 'bg-gray-50 dark:bg-gray-800': todo.completed }"
         >
-        <div class="flex items-center gap-2">
+        <div class="flex flex-wrap items-center gap-2 min-w-0">
           <input
             type="checkbox"
             :checked="todo.completed"
@@ -299,7 +299,7 @@ const refreshTodos = async () => {
             :title="canEdit ? '' : '只读模式：无权限修改'"
             class="h-4 w-4"
           />
-          <span :class="{ 'line-through text-github-gray': todo.completed }">
+          <span class="break-words" :class="{ 'line-through text-github-gray': todo.completed }">
             {{ todo.text }}
           </span>
           <span
@@ -317,7 +317,7 @@ const refreshTodos = async () => {
         <button
           v-if="canEdit"
           @click="removeTodoWrapped(todo._id || todo.id)"
-          class="no-hover-effect text-red-500 hover:text-red-700"
+          class="touch-target no-hover-effect text-red-500 hover:text-red-700"
         >
           <svg
             xmlns="http://www.w3.org/2000/svg"

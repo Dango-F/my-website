@@ -155,8 +155,9 @@ onUnmounted(() => {
 
 <template>
   <div
-    class="min-h-screen bg-[var(--color-bg-primary)] text-[var(--color-text-primary)] relative dark-gradient"
+    class="min-h-screen min-h-[100dvh] pb-safe md:pb-0 text-[var(--color-text-primary)] relative"
   >
+    <div class="app-fixed-bg" aria-hidden="true"></div>
     <NightSky />
     <div class="relative z-10">
       <TheHeader />

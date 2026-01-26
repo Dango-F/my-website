@@ -122,7 +122,7 @@ onMounted(async () => {
 </script>
 
 <template>
-  <div class="container mx-auto px-4 py-8">
+  <div class="container mx-auto px-4 py-6 md:py-8">
     <div
       class="grid grid-cols-1 md:grid-cols-4 gap-6"
       :class="{ 'md:grid-cols-[300px_1fr]': true }"
@@ -134,13 +134,13 @@ onMounted(async () => {
 
       <!-- 主内容区 -->
       <div>
-        <div class="flex justify-between items-center mb-6">
-          <h1 class="text-2xl font-bold">
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+          <h1 class="text-xl sm:text-2xl font-bold">
             欢迎来到{{ profile.name }}的个人网站
           </h1>
           <button
             @click="refreshData"
-            class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center cursor-pointer"
+            class="touch-target w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center cursor-pointer"
             :disabled="isRefreshing"
           >
             <svg
@@ -239,31 +239,31 @@ onMounted(async () => {
         <section class="text-center">
           <!-- 动态打字效果标题 -->
           <div class="mb-8">
-            <div class="text-4xl font-bold mb-2 h-16 flex items-center justify-center">
+            <div class="text-2xl sm:text-3xl md:text-4xl font-bold mb-2 h-12 sm:h-14 md:h-16 flex items-center justify-center">
               <span class="text-github-blue">{{ currentText }}</span>
               <span v-if="isTyping" class="animate-pulse">|</span>
             </div>
-            <p class="text-lg text-gray-800 dark:text-gray-200 mb-2">
+            <p class="text-base sm:text-lg text-gray-800 dark:text-gray-200 mb-2">
               Master's Student in Computer Applied Technology
             </p>
-            <p class="text-sm text-gray-700 dark:text-gray-300">
+            <p class="text-sm sm:text-base text-gray-700 dark:text-gray-300">
               University of Chinese Academy of Sciences (UCAS) - School of Engineering Science (ES)
             </p>
-            <p class="text-sm text-gray-700 dark:text-gray-300 mt-1">
+            <p class="text-sm sm:text-base text-gray-700 dark:text-gray-300 mt-1">
               Research Interests: Spatial Intelligence & Embodied Intelligence
             </p>
           </div>
 
           <!-- GitHub 统计卡片 -->
-          <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8">
+          <div class="flex flex-col md:flex-row justify-center items-center gap-4 mb-8 w-full">
             <img
               :src="`https://github-readme-stats.vercel.app/api?username=${profile.github_username || 'Dango-F'}&show_icons=true&theme=tokyonight&hide_border=true&bg_color=00000000`"
-              class="h-48 rounded-lg shadow-lg"
+              class="w-full max-w-md sm:h-48 h-auto rounded-lg shadow-lg"
               alt="GitHub Stats"
             />
             <img
               :src="`https://github-readme-stats.vercel.app/api/top-langs/?username=${profile.github_username || 'Dango-F'}&layout=compact&theme=tokyonight&hide_border=true&bg_color=00000000`"
-              class="h-44 rounded-lg shadow-lg"
+              class="w-full max-w-md sm:h-44 h-auto rounded-lg shadow-lg"
               alt="Top Languages"
             />
           </div>

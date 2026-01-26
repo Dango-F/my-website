@@ -74,12 +74,12 @@ const hasActiveTodos = computed(() => {
   <header
     class="bg-[var(--color-bg-primary)] border-b border-[var(--color-border)] sticky top-0 z-10 shadow-sm"
   >
-    <div class="container mx-auto px-4 flex items-center justify-between h-16">
+    <div class="container mx-auto px-4 flex items-center justify-between h-16 gap-3">
       <!-- Logo -->
       <div class="flex items-center">
         <RouterLink
           to="/"
-          class="text-[var(--color-text-primary)] font-semibold text-xl flex items-center"
+          class="text-[var(--color-text-primary)] font-semibold text-base sm:text-lg md:text-xl flex items-center max-w-[65vw] truncate leading-tight"
         >
           <span class="font-bold">{{ profile.name }}的个人网站</span>
         </RouterLink>
@@ -91,7 +91,7 @@ const hasActiveTodos = computed(() => {
           <nav class="flex items-center space-x-1 mr-3">
             <RouterLink
               to="/"
-              class="px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
+              class="touch-target px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
               :class="{ 'text-[var(--color-accent-primary)]': isActive('/') }"
             >
               <div class="flex items-center">
@@ -117,7 +117,7 @@ const hasActiveTodos = computed(() => {
 
             <RouterLink
               to="/projects"
-              class="px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
+              class="touch-target px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
               :class="{
                 'text-[var(--color-accent-primary)]': isActive('/projects'),
               }"
@@ -143,7 +143,7 @@ const hasActiveTodos = computed(() => {
 
             <RouterLink
               to="/resume"
-              class="px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
+              class="touch-target px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
               :class="{
                 'text-[var(--color-accent-primary)]': isActive('/resume'),
               }"
@@ -169,7 +169,7 @@ const hasActiveTodos = computed(() => {
 
             <RouterLink
               to="/todo"
-              class="px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
+              class="touch-target px-3 py-2 rounded-md text-sm font-medium relative transition-colors hover:bg-[var(--color-bg-secondary)]"
               :class="{
                 'text-[var(--color-accent-primary)]': isActive('/todo'),
               }"
@@ -212,7 +212,7 @@ const hasActiveTodos = computed(() => {
           <div v-if="authStore.isAuthenticated" class="ml-3 relative user-menu-container">
             <button
               @click="toggleUserMenu"
-              class="admin-menu-btn flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+              class="admin-menu-btn touch-target flex items-center space-x-2 px-3 py-2 rounded-md text-sm font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
             >
               <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -230,7 +230,7 @@ const hasActiveTodos = computed(() => {
             >
               <button
                 @click="goToChangePassword"
-                class="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors flex items-center space-x-2"
+                class="touch-target w-full text-left px-4 py-3 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors flex items-center space-x-2"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -240,7 +240,7 @@ const hasActiveTodos = computed(() => {
               </button>
               <button
                 @click="handleLogout"
-                class="w-full text-left px-4 py-2 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors flex items-center space-x-2 text-red-600 dark:text-red-400"
+                class="touch-target w-full text-left px-4 py-3 text-sm hover:bg-[var(--color-bg-secondary)] transition-colors flex items-center space-x-2 text-red-600 dark:text-red-400"
               >
                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
@@ -264,7 +264,7 @@ const hasActiveTodos = computed(() => {
 
         <button
           @click="toggleMenu"
-          class="text-[var(--color-text-primary)] p-2 rounded-md hover:bg-[var(--color-bg-secondary)]"
+          class="touch-target tap-transparent text-[var(--color-text-primary)] p-2 rounded-md hover:bg-[var(--color-bg-secondary)]"
         >
           <svg
             v-if="!isMenuOpen"
@@ -305,14 +305,14 @@ const hasActiveTodos = computed(() => {
       v-show="isMenuOpen"
       class="md:hidden bg-[var(--color-bg-primary)] border-t border-[var(--color-border)]"
     >
-      <div class="px-2 pt-2 pb-3 space-y-1">
+      <div class="px-3 pt-3 pb-4 space-y-2">
         <RouterLink
           to="/"
           @click="isMenuOpen = false"
-          class="block px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="touch-target block px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
           :class="{ 'text-[var(--color-accent-primary)]': isActive('/') }"
         >
-          <div class="flex items-center">
+          <div class="flex items-center gap-2">
             <svg
               class="mr-2 h-5 w-5"
               viewBox="0 0 16 16"
@@ -332,12 +332,12 @@ const hasActiveTodos = computed(() => {
         <RouterLink
           to="/projects"
           @click="isMenuOpen = false"
-          class="block px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="touch-target block px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
           :class="{
             'text-[var(--color-accent-primary)]': isActive('/projects'),
           }"
         >
-          <div class="flex items-center">
+          <div class="flex items-center gap-2">
             <svg
               class="mr-2 h-5 w-5"
               viewBox="0 0 16 16"
@@ -355,10 +355,10 @@ const hasActiveTodos = computed(() => {
         <RouterLink
           to="/resume"
           @click="isMenuOpen = false"
-          class="block px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="touch-target block px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
           :class="{ 'text-[var(--color-accent-primary)]': isActive('/resume') }"
         >
-          <div class="flex items-center">
+          <div class="flex items-center gap-2">
             <svg
               class="mr-2 h-5 w-5"
               viewBox="0 0 16 16"
@@ -376,11 +376,11 @@ const hasActiveTodos = computed(() => {
         <RouterLink
           to="/todo"
           @click="isMenuOpen = false"
-          class="block px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+          class="touch-target block px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
           :class="{ 'text-[var(--color-accent-primary)]': isActive('/todo') }"
         >
           <div
-            class="flex items-center"
+            class="flex items-center gap-2"
             :class="{ 'text-red-500': hasActiveTodos }"
           >
             <svg
@@ -402,18 +402,18 @@ const hasActiveTodos = computed(() => {
         </RouterLink>
 
         <!-- 用户状态组件 - 移动端 -->
-        <div class="border-t border-[var(--color-border)] mt-2 pt-2">
+        <div class="border-t border-[var(--color-border)] mt-2 pt-3">
           <UserStatus />
         </div>
 
         <!-- 管理员菜单 - 移动端 -->
-        <div v-if="authStore.isAuthenticated" class="border-t border-[var(--color-border)] mt-2 pt-2 px-2 space-y-1">
+        <div v-if="authStore.isAuthenticated" class="border-t border-[var(--color-border)] mt-2 pt-3 px-2 space-y-2">
           <RouterLink
             to="/change-password"
             @click="isMenuOpen = false"
-            class="block px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
+            class="touch-target block px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors"
           >
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
               <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -423,9 +423,9 @@ const hasActiveTodos = computed(() => {
           </RouterLink>
           <button
             @click="handleLogout"
-            class="w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors text-red-600 dark:text-red-400"
+            class="touch-target w-full text-left px-4 py-3 rounded-lg text-base font-medium hover:bg-[var(--color-bg-secondary)] transition-colors text-red-600 dark:text-red-400"
           >
-            <div class="flex items-center">
+            <div class="flex items-center gap-2">
               <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
               </svg>

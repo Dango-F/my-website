@@ -118,7 +118,7 @@ watch(
 <template>
     <div class="user-status bg-[var(--color-bg-primary)] rounded-md overflow-visible relative">
         <!-- 查看模式 - 始终显示 -->
-        <div class="flex items-center rounded-md px-2 py-1"
+        <div class="touch-target flex items-center rounded-md px-3 py-2"
             :class="authStore.isAuthenticated ? 'cursor-pointer hover:bg-[var(--color-bg-secondary)] transition-colors' : ''"
             @click="startEdit">
             <div class="flex items-center gap-1">
@@ -153,11 +153,11 @@ watch(
 
             <div class="flex justify-end gap-2">
                 <button @click="cancelEdit"
-                    class="px-3 py-1 text-sm border border-[var(--color-border)] rounded-md hover:bg-[var(--color-bg-secondary)] transition-colors">
+                    class="touch-target px-4 py-2 text-sm border border-[var(--color-border)] rounded-md hover:bg-[var(--color-bg-secondary)] transition-colors">
                     取消
                 </button>
                 <button @click="saveStatus"
-                    class="px-3 py-1 text-sm bg-github-blue text-white rounded-md hover:bg-blue-700 transition-colors">
+                    class="touch-target px-4 py-2 text-sm bg-github-blue text-white rounded-md hover:bg-blue-700 transition-colors">
                     保存
                 </button>
             </div>

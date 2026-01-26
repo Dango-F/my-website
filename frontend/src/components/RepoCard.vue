@@ -21,7 +21,7 @@ const formatDate = (dateString) => {
 <template>
   <div
     class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md p-4 mb-4 hover:border-github-blue transition-colors">
-    <div class="flex items-start justify-between">
+    <div class="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
       <div>
         <h3 class="text-lg font-semibold text-github-blue hover:underline">
           <a :href="project.url" target="_blank" rel="noopener noreferrer">{{ project.name }}</a>

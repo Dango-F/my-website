@@ -73,7 +73,7 @@ const onDragEnd = () => {
 
 <template>
   <div
-    class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm max-w-[300px]"
+    class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm w-full md:max-w-[300px] mx-auto md:mx-0"
   >
     <!-- 个人信息部分 -->
     <div class="flex flex-col items-center text-center p-4">
@@ -86,7 +86,7 @@ const onDragEnd = () => {
         <button
           v-if="authStore.isAuthenticated"
           @click="openProfileEditor"
-          class="absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
+          class="touch-target absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
           title="编辑个人信息"
         >
           <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -154,7 +154,7 @@ const onDragEnd = () => {
         </svg>
         <a
           :href="`mailto:${profile.email}`"
-          class="text-[var(--color-link)] hover:underline"
+          class="text-[var(--color-link)] hover:underline break-words"
           >{{ profile.email }}</a
         >
       </div>
@@ -176,7 +176,7 @@ const onDragEnd = () => {
           :href="profile.website"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-[var(--color-link)] hover:underline"
+          class="text-[var(--color-link)] hover:underline break-words"
           >{{ profile.website }}</a
         >
       </div>
@@ -246,7 +246,7 @@ const onDragEnd = () => {
           :href="profile.github"
           target="_blank"
           rel="noopener noreferrer"
-          class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+          class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
         >
           <svg
             class="h-5 w-5"
@@ -262,7 +262,7 @@ const onDragEnd = () => {
         <a
           v-if="profile.qq"
           href="#"
-          class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+          class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
           @click.prevent="alert('QQ: ' + profile.qq)"
         >
           <svg
@@ -280,7 +280,7 @@ const onDragEnd = () => {
         <a
           v-if="profile.wechat"
           href="#"
-          class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+          class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
           @click.prevent="alert('微信: ' + profile.wechat)"
         >
           <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">

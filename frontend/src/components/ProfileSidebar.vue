@@ -3,7 +3,7 @@ import { useProfileStore } from "@/stores/profile";
 import { useSidebarStore } from "@/stores/sidebar";
 import { useEditModeStore } from "@/stores/editMode";
 import { useAuthStore } from "@/stores/auth";
-import { computed, ref, watch } from "vue";
+import { computed, ref, watch, onMounted, onBeforeUnmount } from "vue";
 import { storeToRefs } from "pinia";
 import ProfileEditor from "./ProfileEditor.vue";
 
@@ -14,6 +14,8 @@ const { profile } = storeToRefs(profileStore);
 const sidebarStore = useSidebarStore();
 const editModeStore = useEditModeStore();
 const isCollapsed = computed(() => sidebarStore.isCollapsed);
+const isMobile = ref(false);
+const shouldCollapse = computed(() => isCollapsed.value && !isMobile.value);
 
 const showProfileEditor = ref(false);
 const dragIndex = ref(null);
@@ -80,23 +82,37 @@ const onDrop = async (index) => {
 const onDragEnd = () => {
   dragIndex.value = null;
 };
+
+const updateIsMobile = () => {
+  if (typeof window === "undefined") return;
+  isMobile.value = window.innerWidth < 768;
+};
+
+onMounted(() => {
+  updateIsMobile();
+  window.addEventListener("resize", updateIsMobile, { passive: true });
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("resize", updateIsMobile);
+});
 </script>
 
 <template>
   <div
     class="relative transition-all duration-300"
-    :class="{ 'w-8': isCollapsed, 'w-full': !isCollapsed }"
+    :class="{ 'w-8': shouldCollapse, 'w-full': !shouldCollapse }"
   >
     <!-- 侧边栏内容 - 展开状态 -->
     <transition name="fade">
       <div
-        v-if="!isCollapsed"
-        class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm relative transition-all duration-300 max-w-[300px]"
+        v-if="!shouldCollapse"
+        class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md shadow-sm relative transition-all duration-300 w-full md:max-w-[300px] mx-auto md:mx-0"
       >
         <!-- 展开状态的折叠按钮 -->
         <button
           @click="toggleSidebar"
-          class="no-hover-effect absolute -right-4 top-10 z-10 flex items-center justify-center w-4 h-14 rounded-r-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)]"
+          class="no-hover-effect hidden md:flex absolute -right-4 top-10 z-10 items-center justify-center w-4 h-14 rounded-r-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)]"
         >
           <svg
             class="w-3 h-3 text-[var(--color-text-secondary)]"
@@ -125,7 +141,7 @@ const onDragEnd = () => {
             <button
               v-if="authStore.isAuthenticated"
               @click="openProfileEditor"
-              class="absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
+              class="touch-target absolute bottom-0 right-0 p-2 bg-github-blue text-white rounded-full hover:bg-blue-700 shadow-md transition-all"
               title="编辑个人信息"
             >
               <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -193,7 +209,7 @@ const onDragEnd = () => {
             </svg>
             <a
               :href="`mailto:${profile.email}`"
-              class="text-[var(--color-link)] hover:underline"
+              class="text-[var(--color-link)] hover:underline break-words"
               >{{ profile.email }}</a
             >
           </div>
@@ -215,7 +231,7 @@ const onDragEnd = () => {
               :href="profile.website"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-[var(--color-link)] hover:underline"
+              class="text-[var(--color-link)] hover:underline break-words"
               >{{ profile.website }}</a
             >
           </div>
@@ -287,7 +303,7 @@ const onDragEnd = () => {
               :href="profile.github"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+              class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
             >
               <svg
                 class="h-5 w-5"
@@ -303,7 +319,7 @@ const onDragEnd = () => {
             <a
               v-if="profile.qq"
               href="#"
-              class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+              class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
               @click.prevent="alert('QQ: ' + profile.qq)"
             >
               <svg
@@ -320,7 +336,7 @@ const onDragEnd = () => {
             <a
               v-if="profile.wechat"
               href="#"
-              class="text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
+              class="touch-target inline-flex items-center justify-center text-[var(--color-text-secondary)] hover:text-[var(--color-link)] transition-colors"
               @click.prevent="alert('微信: ' + profile.wechat)"
             >
               <svg class="h-5 w-5" viewBox="0 0 24 24" fill="currentColor">
@@ -337,7 +353,7 @@ const onDragEnd = () => {
     <!-- 折叠时只显示头像 -->
     <transition name="fade">
       <div
-        v-if="isCollapsed"
+        v-if="shouldCollapse"
         class="bg-[var(--color-bg-primary)] border-r border-y border-[var(--color-border)] h-screen fixed left-0 top-0 pt-20 w-8 flex flex-col items-center transition-all duration-300"
       >
         <div class="mb-4 mt-4">

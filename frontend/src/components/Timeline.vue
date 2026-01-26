@@ -139,6 +139,27 @@ const { timeline } = storeToRefs(profileStore);
   color: var(--color-text-primary);
 }
 
+@media (max-width: 768px) {
+  .timeline-container {
+    padding-left: 16px;
+    margin-left: 0;
+  }
+
+  .timeline-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .timeline-title {
+    font-size: 16px;
+  }
+
+  .timeline-description {
+    line-height: 1.6;
+  }
+}
+
 /* 暗黑模式调整 */
 @media (prefers-color-scheme: dark) {
   .timeline-container::before {

@@ -11,7 +11,7 @@ const toggleTheme = () => {
 
 <template>
     <button @click="toggleTheme"
-        class="p-2.5 rounded-md transition-all duration-300 ease-in-out hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] relative overflow-hidden group"
+        class="touch-target p-2.5 rounded-md transition-all duration-300 ease-in-out hover:bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] relative overflow-hidden group"
         aria-label="切换主题" :title="themeStore.theme === 'light' ? '切换到深色模式' : '切换到浅色模式'">
         <div class="relative z-10">
             <!-- 浅色模式图标 -->

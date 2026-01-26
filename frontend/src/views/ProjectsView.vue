@@ -265,7 +265,7 @@ watch(() => configStore.githubToken, (newToken) => {
 </script>
 
 <template>
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-6 md:py-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6"
             :class="{ 'md:grid-cols-[300px_1fr]': !isCollapsed, 'md:grid-cols-[auto_1fr]': isCollapsed }">
             <!-- 侧边栏 -->
@@ -275,17 +275,17 @@ watch(() => configStore.githubToken, (newToken) => {
 
             <!-- 主内容区 -->
             <div>
-                <div class="flex justify-between items-center mb-4">
-                    <h1 class="text-2xl font-bold">项目</h1>
+                <div class="flex flex-col gap-4 md:flex-row md:items-center md:justify-between mb-4">
+                    <h1 class="text-xl sm:text-2xl font-bold">项目</h1>
 
                     <!-- GitHub用户名输入 -->
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-col gap-3 w-full sm:flex-row sm:flex-wrap sm:items-center">
                         <input v-model="githubUsername" type="text" placeholder="GitHub用户名"
-                            class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
+                            class="w-full sm:w-56 md:w-64 p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
 
                         <!-- 钥匙图标：所有用户可见；已登录用户可点击编辑/更新令牌 -->
                         <button v-if="authStore.isAuthenticated" @click="toggleTokenInput" type="button"
-                            class="px-2 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] hover:bg-gray-200 dark:hover:bg-gray-800"
+                            class="touch-target px-3 py-2 bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)] rounded-md border border-[var(--color-border)] hover:bg-gray-200 dark:hover:bg-gray-800"
                             :title="hasConfiguredToken ? 'GitHub访问令牌已配置（点击修改）' : 'GitHub访问令牌（未配置）'">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor" :class="{ 'text-green-500': hasConfiguredToken }">
@@ -295,7 +295,7 @@ watch(() => configStore.githubToken, (newToken) => {
                         </button>
 
                         <!-- 未登录用户：显示静态状态图标（绿色表示已由管理员配置），不可交互 -->
-                        <div v-else class="px-2 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
+                        <div v-else class="touch-target px-3 py-2 rounded-md border border-[var(--color-border)] bg-[var(--color-bg-secondary)] text-[var(--color-text-primary)]"
                             :title="hasConfiguredToken ? '管理员已配置 GitHub 访问令牌' : 'GitHub 访问令牌未配置'">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24"
                                 stroke="currentColor" :class="{ 'text-green-500': hasConfiguredToken }">
@@ -305,7 +305,7 @@ watch(() => configStore.githubToken, (newToken) => {
                         </div>
 
                         <button @click="forceRefreshGitHubRepos"
-                            class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
+                            class="touch-target w-full sm:w-auto px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
                             :disabled="isRefreshing">
                             <span v-if="isRefreshing">刷新中...</span>
                             <span v-else>刷新</span>
@@ -358,7 +358,7 @@ watch(() => configStore.githubToken, (newToken) => {
                                 </div>
                                 <div class="flex gap-2">
                                     <button @click="startEditToken"
-                                        class="px-3 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700">
+                                        class="touch-target px-4 py-2 text-sm bg-blue-100 text-blue-700 dark:bg-blue-800 dark:text-blue-300 rounded-md hover:bg-blue-200 dark:hover:bg-blue-700">
                                         更新令牌
                                     </button>
                                 </div>
@@ -370,19 +370,19 @@ watch(() => configStore.githubToken, (newToken) => {
 
                         <!-- 令牌输入表单 -->
                         <div v-else class="flex flex-col space-y-2">
-                            <div class="flex gap-2">
-                                <input id="github-token" v-model="githubToken" type="password"
-                                    placeholder="输入GitHub个人访问令牌"
-                                    class="flex-1 p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
-                                <button @click="applyGitHubToken"
-                                    class="px-3 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700">
+                                <div class="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                    <input id="github-token" v-model="githubToken" type="password"
+                                        placeholder="输入GitHub个人访问令牌"
+                                    class="w-full sm:flex-1 p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
+                                    <button @click="applyGitHubToken"
+                                    class="touch-target w-full sm:w-auto px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700">
                                     应用
-                                </button>
-                                <button v-if="isEditingToken" @click="cancelEditToken"
-                                    class="px-3 py-2 text-sm bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
+                                    </button>
+                                    <button v-if="isEditingToken" @click="cancelEditToken"
+                                    class="touch-target w-full sm:w-auto px-4 py-2 text-sm bg-gray-100 text-gray-700 dark:bg-gray-700 dark:text-gray-200 rounded-md hover:bg-gray-200 dark:hover:bg-gray-600">
                                     取消
-                                </button>
-                            </div>
+                                    </button>
+                                </div>
                             <p class="text-xs text-gray-500">
                                 如果遇到API限制错误，请<a href="https://github.com/settings/tokens" target="_blank"
                                     class="text-github-blue hover:underline">创建个人访问令牌</a>（无需勾选任何权限）。令牌将安全存储在服务器中。
@@ -407,7 +407,7 @@ watch(() => configStore.githubToken, (newToken) => {
                     class="text-center py-10">
                     <p class="text-github-gray mb-4">尚未加载任何项目数据</p>
                     <button @click="loadGitHubRepos"
-                        class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
+                        class="touch-target px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 cursor-pointer"
                         :disabled="isRefreshing">
                         从GitHub获取仓库
                     </button>
@@ -416,12 +416,12 @@ watch(() => configStore.githubToken, (newToken) => {
                 <!-- 过滤器和搜索 -->
                 <div v-else-if="projectStore.projects.length > 0" class="mb-6 flex flex-col space-y-4">
                     <input v-model="searchQuery" type="text" placeholder="搜索项目..."
-                        class="p-2 w-full border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
+                        class="p-2 min-h-[44px] w-full border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]" />
 
-                    <div class="flex flex-wrap gap-2">
-                        <div>
+                    <div class="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
+                        <div class="w-full sm:w-auto">
                             <select v-model="languageFilter"
-                                class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]">
+                                class="w-full sm:w-auto p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]">
                                 <option value="">所有语言</option>
                                 <option v-for="language in projectStore.languages" :key="language" :value="language">
                                     {{ language }}
@@ -429,9 +429,9 @@ watch(() => configStore.githubToken, (newToken) => {
                             </select>
                         </div>
 
-                        <div>
+                        <div class="w-full sm:w-auto">
                             <select v-model="tagFilter"
-                                class="p-2 border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]">
+                                class="w-full sm:w-auto p-2 min-h-[44px] border border-[var(--color-border)] rounded-md bg-[var(--color-bg-primary)]">
                                 <option value="">所有标签</option>
                                 <option v-for="tag in projectStore.tags" :key="tag" :value="tag">
                                     {{ tag }}
@@ -441,7 +441,7 @@ watch(() => configStore.githubToken, (newToken) => {
 
                         <button v-if="languageFilter || tagFilter || searchQuery"
                             @click="languageFilter = ''; tagFilter = ''; searchQuery = ''"
-                            class="px-3 py-1 text-sm border border-[var(--color-border)] rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
+                            class="touch-target w-full sm:w-auto px-4 py-2 text-sm border border-[var(--color-border)] rounded-md hover:bg-gray-100 dark:hover:bg-gray-800">
                             清除过滤
                         </button>
                     </div>
@@ -452,25 +452,25 @@ watch(() => configStore.githubToken, (newToken) => {
                     <RepoCard v-for="project in paginatedProjects" :key="project.id" :project="project" />
 
                     <!-- 分页器 -->
-                    <div class="flex items-center justify-center gap-2 mt-4">
+                    <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
                         <button @click="currentPage = 1" :disabled="currentPage === 1"
-                            class="px-3 py-1 border rounded-md" title="首页">首页</button>
+                            class="touch-target px-3 py-2 border rounded-md" title="首页">首页</button>
 
                         <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
-                            class="px-3 py-1 border rounded-md" title="上一页">上一页</button>
+                            class="touch-target px-3 py-2 border rounded-md" title="上一页">上一页</button>
 
-                        <div class="flex items-center gap-1">
+                        <div class="flex flex-wrap items-center gap-1">
                             <button v-for="p in totalPages" :key="p" @click="currentPage = p"
-                                :class="['px-2 py-1 rounded-md', currentPage === p ? 'bg-github-blue text-white' : 'border']">
+                                :class="['touch-target px-3 py-2 rounded-md', currentPage === p ? 'bg-github-blue text-white' : 'border']">
                                 {{ p }}
                             </button>
                         </div>
 
                         <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
-                            class="px-3 py-1 border rounded-md" title="下一页">下一页</button>
+                            class="touch-target px-3 py-2 border rounded-md" title="下一页">下一页</button>
 
                         <button @click="currentPage = totalPages" :disabled="currentPage === totalPages"
-                            class="px-3 py-1 border rounded-md" title="尾页">尾页</button>
+                            class="touch-target px-3 py-2 border rounded-md" title="尾页">尾页</button>
                     </div>
                 </div>
             </div>

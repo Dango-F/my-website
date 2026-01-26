@@ -97,7 +97,7 @@ const onDragEnd = () => {
 </script>
 
 <template>
-    <div class="container mx-auto px-4 py-8">
+    <div class="container mx-auto px-4 py-6 md:py-8">
         <div class="grid grid-cols-1 md:grid-cols-4 gap-6"
             :class="{ 'md:grid-cols-[300px_1fr]': !isCollapsed, 'md:grid-cols-[auto_1fr]': isCollapsed }">
             <!-- 侧边栏 -->
@@ -107,9 +107,9 @@ const onDragEnd = () => {
 
             <!-- 主内容区 -->
             <div>
-                <div class="flex justify-between items-center mb-6">
-                    <h1 class="text-2xl font-bold">个人简历</h1>
-                    <button @click="refreshProfile" class="px-3 py-1 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center cursor-pointer" :disabled="isRefreshing">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                    <h1 class="text-xl sm:text-2xl font-bold">个人简历</h1>
+                    <button @click="refreshProfile" class="touch-target w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 transition-colors flex items-center justify-center cursor-pointer" :disabled="isRefreshing">
                         <svg v-if="isRefreshing" class="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
@@ -133,7 +133,7 @@ const onDragEnd = () => {
 
                 <!-- 个人信息概述 -->
                 <section class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md p-6 mb-6">
-                    <h2 class="text-xl font-semibold mb-4">个人简介</h2>
+                    <h2 class="text-lg sm:text-xl font-semibold mb-4">个人简介</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
                             <h3 class="font-medium mb-2">联系方式</h3>
@@ -231,10 +231,10 @@ const onDragEnd = () => {
 
                 <!-- 时间轴 -->
                 <div class="relative">
-                    <div class="flex justify-between items-center mb-4">
-                        <h2 class="text-xl font-semibold">个人经历</h2>
+                    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+                        <h2 class="text-lg sm:text-xl font-semibold">个人经历</h2>
                         <button v-if="authStore.isAuthenticated" @click="openTimelineEditor"
-                            class="px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 flex items-center gap-2">
+                            class="touch-target w-full sm:w-auto px-4 py-2 bg-github-blue text-white rounded-md hover:bg-blue-700 flex items-center justify-center gap-2">
                             <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
