@@ -171,3 +171,21 @@ a,
     filter: none !important;
   }
 }
+
+@media (max-width: 767px) {
+  .profile-edit-btn {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .profile-social-links .touch-target {
+    min-width: 32px;
+    min-height: 32px;
+  }
+}

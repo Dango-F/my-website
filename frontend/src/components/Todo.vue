@@ -131,7 +131,7 @@ const refreshTodos = async () => {
   <div
     class="bg-[var(--color-bg-primary)] border border-[var(--color-border)] rounded-md p-4"
   >
-    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-4">
+    <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-5 sm:mb-4">
       <h2 class="text-lg sm:text-xl font-semibold">待办事项</h2>
       <button
         @click="refreshTodos"
@@ -287,10 +287,10 @@ const refreshTodos = async () => {
         <div
           v-for="todo in sortedFilteredTodos"
           :key="todo._id || todo.id"
-          class="p-3 mb-2 border border-[var(--color-border)] rounded-md flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
+          class="p-3 border border-[var(--color-border)] rounded-md flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"
           :class="{ 'bg-gray-50 dark:bg-gray-800': todo.completed }"
         >
-        <div class="flex flex-wrap items-center gap-2 min-w-0">
+        <div class="flex flex-nowrap sm:flex-wrap items-center gap-2 min-w-0">
           <input
             type="checkbox"
             :checked="todo.completed"
@@ -299,17 +299,20 @@ const refreshTodos = async () => {
             :title="canEdit ? '' : '只读模式：无权限修改'"
             class="h-4 w-4"
           />
-          <span class="break-words" :class="{ 'line-through text-github-gray': todo.completed }">
+          <span
+            class="min-w-0 flex-1 truncate sm:whitespace-normal sm:break-words sm:overflow-visible"
+            :class="{ 'line-through text-github-gray': todo.completed }"
+          >
             {{ todo.text }}
           </span>
           <span
-            class="ml-2 px-2 py-0.5 text-xs rounded-full"
+            class="px-2 py-0.5 text-xs rounded-full shrink-0"
             :class="getPriorityClass(todo.priority)"
           >
             {{ { high: "高", medium: "中", low: "低" }[todo.priority] }}
           </span>
           <span
-            class="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200"
+            class="px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200 shrink-0"
           >
             {{ todo.category }}
           </span>

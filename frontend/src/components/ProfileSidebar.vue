@@ -297,7 +297,7 @@ onBeforeUnmount(() => {
           <h3 class="font-medium mb-2 text-[var(--color-text-primary)]">
             社交媒体
           </h3>
-          <div class="profile-social-links flex space-x-4 md:space-x-1">
+          <div class="profile-social-links flex space-x-2 sm:space-x-3 md:space-x-2">
             <a
               v-if="profile.github"
               :href="profile.github"

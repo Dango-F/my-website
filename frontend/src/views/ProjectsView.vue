@@ -228,6 +228,38 @@ const totalPages = computed(() => {
     return Math.max(1, Math.ceil(filteredProjects.value.length / itemsPerPage))
 })
 
+const pageItems = computed(() => {
+    const total = totalPages.value
+    if (total <= 1) return []
+
+    const current = currentPage.value
+    if (total <= 4) {
+        return Array.from({ length: total }, (_, i) => ({
+            type: 'page',
+            page: i + 1,
+            key: `page-${i + 1}`
+        }))
+    }
+
+    let start = Math.max(1, current - 1)
+    let end = Math.min(total, current + 2)
+
+    if (start === 1) {
+        end = Math.min(total, start + 3)
+    } else if (end === total) {
+        start = Math.max(1, end - 3)
+    }
+
+    const items = []
+    if (start > 1) items.push({ type: 'ellipsis', key: 'start-ellipsis' })
+    for (let p = start; p <= end; p++) {
+        items.push({ type: 'page', page: p, key: `page-${p}` })
+    }
+    if (end < total) items.push({ type: 'ellipsis', key: 'end-ellipsis' })
+
+    return items
+})
+
 const paginatedProjects = computed(() => {
     const start = (currentPage.value - 1) * itemsPerPage
     return filteredProjects.value.slice(start, start + itemsPerPage)
@@ -454,23 +486,37 @@ watch(() => configStore.githubToken, (newToken) => {
                     <!-- 分页器 -->
                     <div class="flex flex-wrap items-center justify-center gap-2 mt-4">
                         <button @click="currentPage = 1" :disabled="currentPage === 1"
-                            class="touch-target px-3 py-2 border rounded-md" title="首页">首页</button>
+                            class="touch-target px-3 py-2 text-sm font-medium rounded-full border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="首页">首页</button>
 
                         <button @click="currentPage = Math.max(1, currentPage - 1)" :disabled="currentPage === 1"
-                            class="touch-target px-3 py-2 border rounded-md" title="上一页">上一页</button>
+                            class="touch-target px-3 py-2 text-sm font-medium rounded-full border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="上一页">上一页</button>
 
-                        <div class="flex flex-wrap items-center gap-1">
-                            <button v-for="p in totalPages" :key="p" @click="currentPage = p"
-                                :class="['touch-target px-3 py-2 rounded-md', currentPage === p ? 'bg-github-blue text-white' : 'border']">
-                                {{ p }}
-                            </button>
+                        <div v-if="pageItems.length"
+                            class="flex items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-secondary)] px-2 py-1 shadow-sm">
+                            <template v-for="item in pageItems" :key="item.key">
+                                <span v-if="item.type === 'ellipsis'"
+                                    class="px-2 text-sm text-[var(--color-text-secondary)] select-none">...</span>
+                                <button v-else @click="currentPage = item.page"
+                                    :class="[
+                                        'touch-target px-3 py-1.5 text-sm font-medium rounded-full transition-colors',
+                                        currentPage === item.page
+                                            ? 'bg-github-blue text-white shadow-sm'
+                                            : 'text-[var(--color-text-primary)] hover:bg-[var(--color-bg-tertiary)]'
+                                    ]">
+                                    {{ item.page }}
+                                </button>
+                            </template>
                         </div>
 
                         <button @click="currentPage = Math.min(totalPages, currentPage + 1)" :disabled="currentPage === totalPages"
-                            class="touch-target px-3 py-2 border rounded-md" title="下一页">下一页</button>
+                            class="touch-target px-3 py-2 text-sm font-medium rounded-full border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="下一页">下一页</button>
 
                         <button @click="currentPage = totalPages" :disabled="currentPage === totalPages"
-                            class="touch-target px-3 py-2 border rounded-md" title="尾页">尾页</button>
+                            class="touch-target px-3 py-2 text-sm font-medium rounded-full border border-[var(--color-border)] bg-[var(--color-bg-primary)] hover:bg-[var(--color-bg-tertiary)] disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="尾页">尾页</button>
                     </div>
                 </div>
             </div>
